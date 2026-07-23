@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Gesture Synth AI - Real-time Custom Gesture Engine</title>
+  <title>Gesture Synth AI - Virtual Guitar & Synth Engine</title>
   
-  <!-- Modern Typography -->
+  <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   
-  <!-- MediaPipe Dependencies via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <!-- MediaPipe Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.4/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
+
+  <!-- Tone.js for Web Audio Synthesis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="style.css">
@@ -26,22 +28,21 @@
         <div class="logo-icon">
           <span class="pulse-ring"></span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
-            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6"></path>
-            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
-            <path d="M18 8a2 2 0 0 1 2 2v6a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-1"></path>
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
           </svg>
         </div>
         <div>
           <h1>Gesture Synth <span class="accent-text">AI</span></h1>
-          <p class="subtitle">Custom Extensible Gesture Engine</p>
+          <p class="subtitle">Virtual Gesture Instrument Engine</p>
         </div>
       </div>
 
       <div class="system-status">
         <div class="status-badge" id="camera-status">
           <span class="status-dot warning"></span>
-          <span id="camera-status-text">Initializing Camera...</span>
+          <span id="camera-status-text">Audio / Camera Paused</span>
         </div>
       </div>
     </header>
@@ -51,6 +52,14 @@
       <!-- Camera & Canvas Viewport Section -->
       <section class="viewport-card glass-panel">
         <div class="viewport-container" id="viewport-container">
+          <!-- Audio Start Overlay (Browsers require user click to enable Web Audio) -->
+          <div id="audio-overlay" class="audio-overlay">
+            <button id="btn-start-synth" class="synth-start-btn">
+              <span class="btn-icon">🎸</span>
+              <span>TAP TO START VIRTUAL SYNTH</span>
+            </button>
+          </div>
+
           <!-- Hidden source video -->
           <video id="webcam" playsinline muted></video>
           <!-- Mirrored display canvas -->
@@ -75,21 +84,21 @@
             </div>
           </div>
 
-          <!-- Main Active Gesture Banner -->
+          <!-- Active Chord Banner -->
           <div class="hud-bottom-center">
             <div class="gesture-display-card">
-              <span class="gesture-sub">Detected Gesture</span>
-              <h2 class="gesture-title" id="val-gesture">NONE</h2>
+              <span class="gesture-sub">Active Chord / Note</span>
+              <h2 class="gesture-title" id="val-gesture">SILENT</h2>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Sidebar: Active Slots & Extension Hub -->
+      <!-- Sidebar: Active Slots & Synth Mappings -->
       <aside class="sidebar-panel glass-panel">
         <div class="panel-header">
-          <h3>Recognized Gestures</h3>
-          <span class="badge" id="gesture-count-badge">10 Active</span>
+          <h3>Guitar Chords Map</h3>
+          <span class="badge" id="gesture-count-badge">8 Active Chords</span>
         </div>
 
         <div class="gesture-grid" id="gesture-grid">
@@ -98,8 +107,8 @@
 
         <div class="panel-footer">
           <div class="extensibility-card">
-            <h4>⚡ Developer Pipeline Active</h4>
-            <p>Gesture Engine event bus ready for IoT, WebSockets, or Game Controller hooks.</p>
+            <h4>🎸 Pluck Synth Engine Active</h4>
+            <p>Polyphonic guitar sound engine synchronized with real-time MediaPipe hand tracking.</p>
           </div>
         </div>
       </aside>
@@ -107,9 +116,9 @@
 
     <!-- Footer Status -->
     <footer class="app-footer">
-      <span>Gesture Synth Engine v2.0 (Vanilla JS)</span>
+      <span>Gesture Synth Engine v3.0 (Tone.js Instrument)</span>
       <span class="footer-divider">•</span>
-      <span>60 FPS Hardware Accelerated</span>
+      <span>Real-time Audio Visualizer</span>
     </footer>
   </div>
 
