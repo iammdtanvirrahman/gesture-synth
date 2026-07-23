@@ -1,86 +1,124 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Core Application Architecture
+ * Gesture Synth AI - Virtual Instrument Sound & Gesture Engine
  * ============================================================================
- * Clean Vanilla JS Architecture built for production stability & expansion.
- * Includes:
- * 1. Geometric 3D Gesture Engine (Orientation invariant calculation)
- * 2. FPS & Render Loop Manager (Synchronized Canvas/Video feed)
- * 3. Mobile Chrome / GitHub Pages Camera Stabilizer
- * 4. Modular Event Dispatcher for IoT/Extension compatibility
  */
 
 // ============================================================================
-// 1. GESTURE RECOGNITION ENGINE (Extensible Module)
+// 1. SOUND & AUDIO SYNTH ENGINE (Tone.js Integration)
+// ============================================================================
+class SoundEngine {
+  constructor() {
+    this.synth = null;
+    this.waveform = null;
+    this.currentChordId = null;
+    this.isAudioReady = false;
+
+    // Gesture ID -> Musical Chord Definition
+    this.chordMap = {
+      'fist': { name: 'C Major', notes: ['C3', 'E3', 'G3', 'C4'] },
+      'point_up': { name: 'D Minor', notes: ['D3', 'F3', 'A3', 'D4'] },
+      'victory': { name: 'E Minor', notes: ['E3', 'G3', 'B3', 'E4'] },
+      'three_fingers': { name: 'F Major', notes: ['F3', 'A3', 'C4', 'F4'] },
+      'four_fingers': { name: 'G Major', notes: ['G3', 'B3', 'D4', 'G4'] },
+      'open_palm': { name: 'A Minor', notes: ['A3', 'C4', 'E4', 'A4'] },
+      'rock_on': { name: 'E Power Chord', notes: ['E2', 'B2', 'E3', 'G#3'] },
+      'ok_gesture': { name: 'High C Strum', notes: ['C4', 'E4', 'G4', 'C5'] }
+    };
+  }
+
+  async init() {
+    await Tone.start();
+
+    // Guitar / Plucked String Polyphonic Synthesizer
+    this.synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: {
+        attack: 0.005, // Fast pluck
+        decay: 1.2,    // String vibration decay
+        sustain: 0.1,
+        release: 1.2
+      }
+    }).toDestination();
+
+    // Reverb & Delay Effects
+    const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination();
+    this.synth.connect(reverb);
+
+    // Audio Waveform Analyzer for Visualizer
+    this.waveform = new Tone.Waveform(128);
+    Tone.Destination.connect(this.waveform);
+
+    this.isAudioReady = true;
+  }
+
+  playChord(gestureId) {
+    if (!this.isAudioReady) return null;
+
+    if (this.currentChordId === gestureId) return this.chordMap[gestureId];
+
+    // Release active notes
+    this.synth.releaseAll();
+
+    const chord = this.chordMap[gestureId];
+    if (chord) {
+      // Trigger new chord
+      this.synth.triggerAttack(chord.notes);
+      this.currentChordId = gestureId;
+      return chord;
+    } else {
+      this.currentChordId = null;
+      return null;
+    }
+  }
+
+  stopAll() {
+    if (this.isAudioReady && this.currentChordId) {
+      this.synth.releaseAll();
+      this.currentChordId = null;
+    }
+  }
+
+  getWaveformData() {
+    return this.waveform ? this.waveform.getValue() : null;
+  }
+}
+
+// ============================================================================
+// 2. GESTURE RECOGNITION ENGINE
 // ============================================================================
 class GestureEngine {
   constructor() {
-    // Registry for gesture definitions
     this.gestureRules = new Map();
-    this.eventListeners = new Set();
-    
-    // Register default gestures
     this._registerDefaults();
   }
 
-  /**
-   * Register a custom gesture rule.
-   * @param {string} id Unique identifier
-   * @param {string} name Human readable display name
-   * @param {string} icon Emoji or icon representation
-   * @param {Function} evaluator Evaluator function taking (landmarks, fingerState) -> boolean
-   */
   registerGesture(id, name, icon, evaluator) {
     this.gestureRules.set(id, { id, name, icon, evaluator });
   }
 
-  /**
-   * Subscribe to detected gesture events.
-   * @param {Function} callback Callback receiving gesture result object
-   */
-  onGesture(callback) {
-    this.eventListeners.add(callback);
-  }
-
-  /**
-   * Evaluates hand landmarks against all registered rules.
-   * @param {Array} landmarks 21 MediaPipe hand keypoints
-   * @returns {Object} Detected gesture payload
-   */
   evaluate(landmarks) {
     if (!landmarks || landmarks.length < 21) {
-      return { id: 'NONE', name: 'NONE', icon: '❓', confidence: 0 };
+      return { id: 'NONE', name: 'SILENT', icon: '❓' };
     }
 
-    // Calculate structural metrics
     const fingerState = this._analyzeFingers(landmarks);
 
-    // Test registered gestures in order
     for (const [id, rule] of this.gestureRules) {
       if (rule.evaluator(landmarks, fingerState)) {
-        const result = { id: rule.id, name: rule.name, icon: rule.icon, confidence: 0.95 };
-        this._notify(result);
-        return result;
+        return { id: rule.id, name: rule.name, icon: rule.icon };
       }
     }
 
-    const fallback = { id: 'UNKNOWN', name: 'CUSTOM / UNKNOWN', icon: '✋', confidence: 0.5 };
-    this._notify(fallback);
-    return fallback;
+    return { id: 'NONE', name: 'SILENT', icon: '✋' };
   }
 
-  /**
-   * Analyzes extension state for all 5 digits.
-   */
   _analyzeFingers(lm) {
     const wrist = lm[0];
-
-    // Helper: Distance between two 3D landmarks
     const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
 
-    // Finger tips & base joints
     const fingers = {
-      thumb: dist(lm[4], lm[17]) > dist(lm[3], lm[17]), // Extended outward relative to palm
+      thumb: dist(lm[4], lm[17]) > dist(lm[3], lm[17]),
       index: dist(lm[8], wrist) > dist(lm[6], wrist),
       middle: dist(lm[12], wrist) > dist(lm[10], wrist),
       ring: dist(lm[16], wrist) > dist(lm[14], wrist),
@@ -90,77 +128,50 @@ class GestureEngine {
     return { fingers, dist };
   }
 
-  /**
-   * Internal default gesture definitions.
-   */
   _registerDefaults() {
-    // 1. Open Palm
-    this.registerGesture('open_palm', 'Open Palm', '✋', (lm, s) => 
+    this.registerGesture('open_palm', 'A Minor', '✋', (lm, s) => 
       s.fingers.thumb && s.fingers.index && s.fingers.middle && s.fingers.ring && s.fingers.pinky
     );
 
-    // 2. Fist
-    this.registerGesture('fist', 'Fist', '✊', (lm, s) => 
+    this.registerGesture('fist', 'C Major', '✊', (lm, s) => 
       !s.fingers.index && !s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
     );
 
-    // 3. Point Up
-    this.registerGesture('point_up', 'Point Up', '☝️', (lm, s) => 
+    this.registerGesture('point_up', 'D Minor', '☝️', (lm, s) => 
       s.fingers.index && !s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
     );
 
-    // 4. Victory / Peace
-    this.registerGesture('victory', 'Victory', '✌️', (lm, s) => 
+    this.registerGesture('victory', 'E Minor', '✌️', (lm, s) => 
       s.fingers.index && s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
     );
 
-    // 5. Three Fingers
-    this.registerGesture('three_fingers', 'Three Fingers', '🤟', (lm, s) => 
+    this.registerGesture('three_fingers', 'F Major', '🤟', (lm, s) => 
       s.fingers.index && s.fingers.middle && s.fingers.ring && !s.fingers.pinky
     );
 
-    // 6. Four Fingers
-    this.registerGesture('four_fingers', 'Four Fingers', '4️⃣', (lm, s) => 
+    this.registerGesture('four_fingers', 'G Major', '4️⃣', (lm, s) => 
       !s.fingers.thumb && s.fingers.index && s.fingers.middle && s.fingers.ring && s.fingers.pinky
     );
 
-    // 7. Thumbs Up
-    this.registerGesture('thumbs_up', 'Thumbs Up', '👍', (lm, s) => {
-      const isUp = lm[4].y < lm[3].y && lm[3].y < lm[2].y;
-      return s.fingers.thumb && isUp && !s.fingers.index && !s.fingers.middle && !s.fingers.ring;
-    });
+    this.registerGesture('rock_on', 'E Power Chord', '🤘', (lm, s) => 
+      s.fingers.index && !s.fingers.middle && !s.fingers.ring && s.fingers.pinky
+    );
 
-    // 8. Thumbs Down
-    this.registerGesture('thumbs_down', 'Thumbs Down', '👎', (lm, s) => {
-      const isDown = lm[4].y > lm[3].y && lm[3].y > lm[2].y;
-      return s.fingers.thumb && isDown && !s.fingers.index && !s.fingers.middle && !s.fingers.ring;
-    });
-
-    // 9. OK Gesture
-    this.registerGesture('ok_gesture', 'OK Sign', '👌', (lm, s) => {
+    this.registerGesture('ok_gesture', 'High C Strum', '👌', (lm, s) => {
       const pinchDist = s.dist(lm[4], lm[8]);
       return pinchDist < 0.07 && s.fingers.middle && s.fingers.ring;
     });
-
-    // 10. Rock / Metal
-    this.registerGesture('rock_on', 'Rock', '🤘', (lm, s) => 
-      s.fingers.index && !s.fingers.middle && !s.fingers.ring && s.fingers.pinky
-    );
-  }
-
-  _notify(result) {
-    this.eventListeners.forEach(cb => cb(result));
   }
 }
 
 // ============================================================================
-// 2. UI CONTROLLER MODULE
+// 3. UI CONTROLLER MODULE
 // ============================================================================
 class UIController {
-  constructor(gestureEngine) {
+  constructor(gestureEngine, soundEngine) {
     this.engine = gestureEngine;
+    this.soundEngine = soundEngine;
 
-    // DOM Elements
     this.elements = {
       fps: document.getElementById('val-fps'),
       confidence: document.getElementById('val-confidence'),
@@ -170,7 +181,8 @@ class UIController {
       cameraStatusText: document.getElementById('camera-status-text'),
       cameraStatusDot: document.querySelector('#camera-status .status-dot'),
       gestureGrid: document.getElementById('gesture-grid'),
-      gestureCountBadge: document.getElementById('gesture-count-badge')
+      audioOverlay: document.getElementById('audio-overlay'),
+      btnStartSynth: document.getElementById('btn-start-synth')
     };
 
     this.gestureCards = new Map();
@@ -181,6 +193,7 @@ class UIController {
     this.elements.gestureGrid.innerHTML = '';
     
     this.engine.gestureRules.forEach((rule) => {
+      const chordInfo = this.soundEngine.chordMap[rule.id] || { name: 'N/A' };
       const card = document.createElement('div');
       card.className = 'gesture-card';
       card.id = `card-${rule.id}`;
@@ -189,17 +202,15 @@ class UIController {
           <span class="gesture-icon">${rule.icon}</span>
           <span class="gesture-name">${rule.name}</span>
         </div>
-        <div class="gesture-state"></div>
+        <span class="gesture-chord">${chordInfo.name}</span>
       `;
       this.elements.gestureGrid.appendChild(card);
       this.gestureCards.set(rule.id, card);
     });
-
-    this.elements.gestureCountBadge.textContent = `${this.engine.gestureRules.size} Active`;
   }
 
   updateCameraReady() {
-    this.elements.cameraStatusText.textContent = 'Camera Active';
+    this.elements.cameraStatusText.textContent = 'Synth Ready';
     this.elements.cameraStatusDot.className = 'status-dot active';
   }
 
@@ -208,7 +219,7 @@ class UIController {
     this.elements.confidence.textContent = handDetected ? `${Math.round(confidence * 100)}%` : '0%';
 
     if (handDetected) {
-      this.elements.handPresence.textContent = 'Hand Active';
+      this.elements.handPresence.textContent = 'Playing Hand';
       this.elements.handIndicator.classList.add('detected');
     } else {
       this.elements.handPresence.textContent = 'No Hand';
@@ -216,16 +227,15 @@ class UIController {
     }
   }
 
-  setActiveGesture(gesture) {
-    // Clear previous active states
+  setActiveGesture(gesture, chord) {
     this.gestureCards.forEach(card => card.classList.remove('active'));
 
-    if (!gesture || gesture.id === 'NONE') {
-      this.elements.gestureTitle.textContent = 'NONE';
+    if (!gesture || gesture.id === 'NONE' || !chord) {
+      this.elements.gestureTitle.textContent = 'SILENT';
       return;
     }
 
-    this.elements.gestureTitle.textContent = `${gesture.icon} ${gesture.name}`;
+    this.elements.gestureTitle.textContent = `${gesture.icon} ${chord.name}`;
 
     const activeCard = this.gestureCards.get(gesture.id);
     if (activeCard) {
@@ -235,7 +245,7 @@ class UIController {
 }
 
 // ============================================================================
-// 3. MAIN APPLICATION CONTROLLER
+// 4. MAIN APPLICATION
 // ============================================================================
 class App {
   constructor() {
@@ -243,24 +253,29 @@ class App {
     this.canvasElement = document.getElementById('output-canvas');
     this.canvasCtx = this.canvasElement.getContext('2d');
 
-    // Modules
+    this.soundEngine = new SoundEngine();
     this.gestureEngine = new GestureEngine();
-    this.ui = new UIController(this.gestureEngine);
+    this.ui = new UIController(this.gestureEngine, this.soundEngine);
 
-    // Performance & FPS tracking
     this.lastFrameTime = performance.now();
-    this.frameCount = 0;
     this.currentFps = 0;
     this.isCameraRunning = false;
+    this.isProcessing = false;
 
-    // Initialize pipeline
-    this.initMediaPipe();
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    this.ui.elements.btnStartSynth.addEventListener('click', async () => {
+      await this.soundEngine.init();
+      this.ui.elements.audioOverlay.classList.add('hidden');
+      this.initMediaPipe();
+    });
   }
 
   initMediaPipe() {
-    // MediaPipe Hands Config
     this.hands = new Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
 
     this.hands.setOptions({
@@ -271,8 +286,6 @@ class App {
     });
 
     this.hands.onResults((results) => this.onResults(results));
-
-    // Safe Single Camera Initialization
     this.startCamera();
   }
 
@@ -280,76 +293,87 @@ class App {
     if (this.isCameraRunning) return;
 
     try {
-      // Use MediaPipe Camera Utility for robust multi-platform streaming
-      this.camera = new Camera(this.videoElement, {
-        onFrame: async () => {
-          if (this.videoElement.readyState >= 2) {
-            await this.hands.send({ image: this.videoElement });
-          }
-        },
-        width: 1280,
-        height: 720
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
       });
 
-      await this.camera.start();
+      this.videoElement.srcObject = stream;
+      await new Promise((resolve) => {
+        this.videoElement.onloadedmetadata = () => {
+          this.videoElement.play();
+          resolve();
+        };
+      });
+
       this.isCameraRunning = true;
       this.ui.updateCameraReady();
+      this.renderLoop();
     } catch (err) {
       console.error('Camera Access Error:', err);
-      this.ui.elements.cameraStatusText.textContent = 'Camera Blocked / Unavailable';
-      this.ui.elements.cameraStatusDot.className = 'status-dot warning';
     }
   }
 
+  async renderLoop() {
+    if (!this.isCameraRunning) return;
+
+    if (this.videoElement.readyState >= 2 && !this.isProcessing) {
+      this.isProcessing = true;
+      await this.hands.send({ image: this.videoElement });
+      this.isProcessing = false;
+    }
+
+    requestAnimationFrame(() => this.renderLoop());
+  }
+
   onResults(results) {
-    // Calculate FPS
     const now = performance.now();
     const delta = (now - this.lastFrameTime) / 1000;
     this.lastFrameTime = now;
-    this.currentFps = 1 / delta;
+    if (delta > 0) this.currentFps = 1 / delta;
 
-    // Sync Canvas dimensions with intrinsic video stream
     if (this.videoElement.videoWidth && 
        (this.canvasElement.width !== this.videoElement.videoWidth)) {
       this.canvasElement.width = this.videoElement.videoWidth;
       this.canvasElement.height = this.videoElement.videoHeight;
     }
 
-    // Canvas Clear
     this.canvasCtx.save();
     this.canvasCtx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
 
-    // Render Video Background onto Canvas
+    // Draw Video Feed
     this.canvasCtx.drawImage(
       results.image, 0, 0, this.canvasElement.width, this.canvasElement.height
     );
 
-    let detectedGesture = { id: 'NONE', name: 'NONE', icon: '❓', confidence: 0 };
+    let detectedGesture = { id: 'NONE', name: 'SILENT', icon: '❓' };
+    let activeChord = null;
     let handFound = false;
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       handFound = true;
       const landmarks = results.multiHandLandmarks[0];
 
-      // 1. Draw Landmarks & Connectors with Cyan Styling
+      // Draw Hand Landmarks
       this.drawHandMesh(landmarks);
 
-      // 2. Evaluate Gesture
+      // Recognize Gesture & Play Audio Chord
       detectedGesture = this.gestureEngine.evaluate(landmarks);
+      activeChord = this.soundEngine.playChord(detectedGesture.id);
+    } else {
+      this.soundEngine.stopAll();
     }
+
+    // Draw Audio Waveform (Like in reel screenshot)
+    this.drawAudioWaveform();
 
     this.canvasCtx.restore();
 
-    // Update UI HUD
     this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.9, handFound);
-    this.ui.setActiveGesture(detectedGesture);
+    this.ui.setActiveGesture(detectedGesture, activeChord);
   }
 
-  /**
-   * Custom High-Performance Hand Mesh Drawing
-   */
   drawHandMesh(landmarks) {
-    // MediaPipe Drawing Utils Call
     drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
       color: '#00f3ff',
       lineWidth: 3
@@ -357,14 +381,50 @@ class App {
 
     drawLandmarks(this.canvasCtx, landmarks, {
       color: '#ffffff',
-      fillColor: '#00f3ff',
+      fillColor: '#ffb700',
       lineWidth: 1,
       radius: 4
     });
   }
+
+  /**
+   * Draws dynamic audio visualizer line across bottom of video (as shown in reel)
+   */
+  drawAudioWaveform() {
+    const wave = this.soundEngine.getWaveformData();
+    if (!wave) return;
+
+    const ctx = this.canvasCtx;
+    const width = this.canvasElement.width;
+    const height = this.canvasElement.height;
+    const baseline = height - 70;
+
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffb700';
+    ctx.shadowColor = '#ffb700';
+    ctx.shadowBlur = 12;
+
+    const sliceWidth = width / wave.length;
+    let x = 0;
+
+    for (let i = 0; i < wave.length; i++) {
+      const v = wave[i];
+      const y = baseline + v * 40;
+
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      x += sliceWidth;
+    }
+
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
 }
 
-// Global Entry point execution on DOM Load
 window.addEventListener('DOMContentLoaded', () => {
   window.gestureSynthApp = new App();
 });
