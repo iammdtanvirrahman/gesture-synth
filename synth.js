@@ -1,72 +1,88 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Tone.js Virtual Guitar Audio Engine
+ * Guitar Synth Engine - Sound Controller using Tone.js
  * ============================================================================
  */
 class GuitarSynthEngine {
   constructor() {
     this.synth = null;
     this.waveform = null;
-    this.currentChordId = null;
     this.isAudioReady = false;
 
-    // Guitar Chords Map
     this.chordMap = {
-      'fist': { name: 'C Major', notes: ['C3', 'E3', 'G3', 'C4'] },
-      'point_up': { name: 'D Minor', notes: ['D3', 'F3', 'A3', 'D4'] },
-      'victory': { name: 'E Minor', notes: ['E3', 'G3', 'B3', 'E4'] },
-      'three_fingers': { name: 'F Major', notes: ['F3', 'A3', 'C4', 'F4'] },
-      'four_fingers': { name: 'G Major', notes: ['G3', 'B3', 'D4', 'G4'] },
-      'open_palm': { name: 'A Minor', notes: ['A3', 'C4', 'E4', 'A4'] },
-      'rock_on': { name: 'E Power Chord', notes: ['E2', 'B2', 'E3', 'G#3'] },
-      'ok_gesture': { name: 'High C Strum', notes: ['C4', 'E4', 'G4', 'C5'] }
+      'OPEN_PALM': { name: 'C Major', notes: ['C4', 'E4', 'G4'] },
+      'FIST': { name: 'G Major', notes: ['G3', 'B3', 'D4'] },
+      'PEACE': { name: 'A Minor', notes: ['A3', 'C4', 'E4'] },
+      'THUMBS_UP': { name: 'F Major', notes: ['F3', 'A3', 'C4'] },
+      'POINTING': { name: 'E Minor', notes: ['E3', 'G3', 'B3'] },
+      'OK_SIGN': { name: 'D Minor', notes: ['D4', 'F4', 'A4'] },
+      'ROCK': { name: 'Power Chord E', notes: ['E2', 'B2', 'E3'] },
+      'THREE_FINGERS': { name: 'Cadd9', notes: ['C4', 'E4', 'G4', 'D5'] },
+      'FOUR_FINGERS': { name: 'Am7', notes: ['A3', 'C4', 'E4', 'G4'] },
+      'PINCH': { name: 'G7', notes: ['G3', 'B3', 'D4', 'F4'] }
     };
   }
 
   async init() {
-    await Tone.start();
+    try {
+      if (window.Tone) {
+        await Tone.start();
+        if (Tone.context.state !== 'running') {
+          await Tone.context.resume();
+        }
 
-    // Pluck Synth Engine
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: {
-        attack: 0.005,
-        decay: 1.2,
-        sustain: 0.1,
-        release: 1.2
+        this.synth = new Tone.PolySynth(Tone.Synth, {
+          maxPolyphony: 4,
+          oscillator: { type: 'triangle' },
+          envelope: {
+            attack: 0.01,
+            decay: 0.3,
+            sustain: 0.2,
+            release: 0.5
+          }
+        }).toDestination();
+
+        this.synth.volume.value = 0;
+
+        this.waveform = new Tone.Waveform(64);
+        Tone.Destination.connect(this.waveform);
+
+        this.isAudioReady = true;
+        console.log("Audio Engine Ready!");
       }
-    }).toDestination();
-
-    const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination();
-    this.synth.connect(reverb);
-
-    this.waveform = new Tone.Waveform(128);
-    Tone.Destination.connect(this.waveform);
-
-    this.isAudioReady = true;
-  }
-
-  playChord(gestureId) {
-    if (!this.isAudioReady) return null;
-    if (this.currentChordId === gestureId) return this.chordMap[gestureId];
-
-    this.synth.releaseAll();
-
-    const chord = this.chordMap[gestureId];
-    if (chord) {
-      this.synth.triggerAttack(chord.notes);
-      this.currentChordId = gestureId;
-      return chord;
-    } else {
-      this.currentChordId = null;
-      return null;
+    } catch (err) {
+      console.error("Audio Engine Init Error:", err);
     }
   }
 
-  stopAll() {
-    if (this.isAudioReady && this.currentChordId) {
+  playChord(gestureId) {
+    if (!this.isAudioReady || !this.synth) return null;
+
+    if (Tone.context.state !== 'running') {
+      Tone.context.resume();
+    }
+
+    const chord = this.chordMap[gestureId];
+    if (!chord) {
+      this.stopAll();
+      return null;
+    }
+
+    try {
       this.synth.releaseAll();
-      this.currentChordId = null;
+      this.synth.triggerAttack(chord.notes);
+    } catch (err) {
+      console.error('Audio Playback Error:', err);
+    }
+
+    return chord;
+  }
+
+  stopAll() {
+    if (this.synth && this.isAudioReady) {
+      try {
+        this.synth.releaseAll();
+      } catch (e) {}
     }
   }
 
