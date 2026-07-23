@@ -1,32 +1,20 @@
-/* ==========================================================================
-   Gesture Synth AI - Theme & Design System
-   ========================================================================== */
-
 :root {
   --bg-dark: #05070a;
-  --bg-surface: #0b0f19;
   --glass-bg: rgba(13, 19, 33, 0.75);
   --glass-border: rgba(0, 243, 255, 0.2);
-  
   --cyan-main: #00f3ff;
   --cyan-glow: rgba(0, 243, 255, 0.4);
   --cyan-dim: rgba(0, 243, 255, 0.12);
   --gold-accent: #ffb700;
-  
   --text-main: #f0f6fc;
   --text-muted: #8b949e;
-  
   --status-green: #00ff88;
   --status-yellow: #ffb700;
-
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Fira Code', monospace;
-  
   --radius-lg: 20px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  
-  --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *, *::before, *::after {
@@ -178,7 +166,6 @@ body {
   border: 1px solid rgba(0, 243, 255, 0.2);
 }
 
-/* Audio Start Overlay Button */
 .audio-overlay {
   position: absolute;
   top: 0;
@@ -363,7 +350,7 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
 .gesture-card.active {
