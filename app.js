@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Application Main Controller & Visualizer
+ * Gesture Synth AI - Application Main Controller & Visualizer (Lag Fixed)
  * ============================================================================
  */
 class UIController {
@@ -84,13 +84,14 @@ class App {
   constructor() {
     this.videoElement = document.getElementById('webcam');
     this.canvasElement = document.getElementById('output-canvas');
-    this.canvasCtx = this.canvasElement.getContext('2d');
+    this.canvasCtx = this.canvasElement.getContext('2d', { alpha: false });
 
     this.soundEngine = new GuitarSynthEngine();
     this.gestureEngine = new GestureEngine();
     this.ui = new UIController(this.gestureEngine, this.soundEngine);
 
     this.lastFrameTime = performance.now();
+    this.lastProcessTime = 0;
     this.currentFps = 0;
     this.isCameraRunning = false;
     this.isProcessing = false;
@@ -111,11 +112,12 @@ class App {
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
 
+    // Lite Model for Mobile Speed
     this.hands.setOptions({
       maxNumHands: 1,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7
+      modelComplexity: 0,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
     });
 
     this.hands.onResults((results) => this.onResults(results));
@@ -126,8 +128,16 @@ class App {
     if (this.isCameraRunning) return;
 
     try {
+      if (this.ui.elements.cameraStatusText) {
+        this.ui.elements.cameraStatusText.textContent = 'Connecting Camera...';
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { 
+          facingMode: 'user', 
+          width: { ideal: 480 }, 
+          height: { ideal: 360 } 
+        },
         audio: false
       });
 
@@ -150,8 +160,13 @@ class App {
   async renderLoop() {
     if (!this.isCameraRunning) return;
 
-    if (this.videoElement.readyState >= 2 && !this.isProcessing) {
+    const now = performance.now();
+    
+    // Throttling: AI প্রসেসিং প্রতি ৫০ মিলি-সেকেন্ডে একবার হবে (Max 20 AI FPS)
+    // এর ফলে সিপিইউ ফ্রি থাকবে এবং ভিডিও আটকাবে না
+    if (this.videoElement.readyState >= 2 && !this.isProcessing && (now - this.lastProcessTime > 50)) {
       this.isProcessing = true;
+      this.lastProcessTime = now;
       await this.hands.send({ image: this.videoElement });
       this.isProcessing = false;
     }
@@ -171,12 +186,12 @@ class App {
       this.canvasElement.height = this.videoElement.videoHeight;
     }
 
-    this.canvasCtx.save();
-    this.canvasCtx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
+    const ctx = this.canvasCtx;
+    const width = this.canvasElement.width;
+    const height = this.canvasElement.height;
 
-    this.canvasCtx.drawImage(
-      results.image, 0, 0, this.canvasElement.width, this.canvasElement.height
-    );
+    ctx.save();
+    ctx.drawImage(results.image, 0, 0, width, height);
 
     let detectedGesture = { id: 'NONE', name: 'SILENT', icon: '❓' };
     let activeChord = null;
@@ -186,67 +201,59 @@ class App {
       handFound = true;
       const landmarks = results.multiHandLandmarks[0];
 
-      this.drawHandMesh(landmarks);
+      // Ultra-fast Light Hand Draw
+      this.drawFastHandMesh(ctx, landmarks, width, height);
+
       detectedGesture = this.gestureEngine.evaluate(landmarks);
       activeChord = this.soundEngine.playChord(detectedGesture.id);
     } else {
       this.soundEngine.stopAll();
     }
 
-    this.drawAudioWaveform();
+    // Fast Audio Waveform
+    this.drawAudioWaveform(ctx, width, height);
 
-    this.canvasCtx.restore();
+    ctx.restore();
 
     this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.9, handFound);
     this.ui.setActiveGesture(detectedGesture, activeChord);
   }
 
-  drawHandMesh(landmarks) {
-    drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
-      color: '#00f3ff',
-      lineWidth: 3
-    });
-
-    drawLandmarks(this.canvasCtx, landmarks, {
-      color: '#ffffff',
-      fillColor: '#ffb700',
-      lineWidth: 1,
-      radius: 4
-    });
+  // মিডিয়াপাইপের ভারী ড্রয়িং উঠিয়ে দিয়ে একদম হালকা ড্রয়িং বসানো হয়েছে
+  drawFastHandMesh(ctx, landmarks, width, height) {
+    ctx.fillStyle = '#ffb700';
+    for (let i = 0; i < landmarks.length; i++) {
+      const x = landmarks[i].x * width;
+      const y = landmarks[i].y * height;
+      ctx.fillRect(x - 3, y - 3, 6, 6);
+    }
   }
 
-  drawAudioWaveform() {
+  drawAudioWaveform(ctx, width, height) {
     const wave = this.soundEngine.getWaveformData();
     if (!wave) return;
 
-    const ctx = this.canvasCtx;
-    const width = this.canvasElement.width;
-    const height = this.canvasElement.height;
-    const baseline = height - 70;
-
+    const baseline = height - 50;
     ctx.beginPath();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#ffb700';
-    ctx.shadowColor = '#ffb700';
-    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#00f3ff'; // Glow blur রিমুভ করা হয়েছে যাতে স্পিড ৫ গুণ বাড়ে
 
     const sliceWidth = width / wave.length;
     let x = 0;
 
-    for (let i = 0; i < wave.length; i++) {
+    for (let i = 0; i < wave.length; i += 2) { // Skip alternate samples for performance
       const v = wave[i];
-      const y = baseline + v * 40;
+      const y = baseline + v * 30;
 
       if (i === 0) {
         ctx.moveTo(x, y);
       } else {
         ctx.lineTo(x, y);
       }
-      x += sliceWidth;
+      x += sliceWidth * 2;
     }
 
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
 }
 
