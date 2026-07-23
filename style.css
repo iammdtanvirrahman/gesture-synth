@@ -5,21 +5,19 @@
 :root {
   --bg-dark: #05070a;
   --bg-surface: #0b0f19;
-  --glass-bg: rgba(13, 19, 33, 0.65);
-  --glass-border: rgba(0, 243, 255, 0.15);
-  --glass-hover: rgba(0, 243, 255, 0.25);
+  --glass-bg: rgba(13, 19, 33, 0.75);
+  --glass-border: rgba(0, 243, 255, 0.2);
   
   --cyan-main: #00f3ff;
   --cyan-glow: rgba(0, 243, 255, 0.4);
   --cyan-dim: rgba(0, 243, 255, 0.12);
+  --gold-accent: #ffb700;
   
   --text-main: #f0f6fc;
   --text-muted: #8b949e;
-  --text-accent: #00f3ff;
   
   --status-green: #00ff88;
   --status-yellow: #ffb700;
-  --status-red: #ff3366;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Fira Code', monospace;
@@ -31,7 +29,6 @@
   --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Reset & Global Base */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -44,10 +41,9 @@ body {
   font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: hidden;
-  line-height: 1.5;
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(0, 243, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(0, 102, 255, 0.05) 0%, transparent 40%);
+    radial-gradient(circle at 85% 85%, rgba(255, 183, 0, 0.05) 0%, transparent 40%);
 }
 
 .app-wrapper {
@@ -60,7 +56,6 @@ body {
   gap: 1.5rem;
 }
 
-/* Glassmorphism Panel */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
@@ -68,14 +63,8 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  transition: border-color var(--transition-fast);
 }
 
-.glass-panel:hover {
-  border-color: rgba(0, 243, 255, 0.25);
-}
-
-/* Header Styles */
 .app-header {
   display: flex;
   align-items: center;
@@ -124,7 +113,6 @@ body {
 .brand h1 {
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 .accent-text {
@@ -137,7 +125,6 @@ body {
   color: var(--text-muted);
 }
 
-/* System Status Badge */
 .status-badge {
   display: flex;
   align-items: center;
@@ -147,7 +134,6 @@ body {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 0.825rem;
-  font-weight: 500;
 }
 
 .status-dot {
@@ -155,7 +141,6 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--status-yellow);
-  box-shadow: 0 0 8px var(--status-yellow);
 }
 
 .status-dot.active {
@@ -163,11 +148,6 @@ body {
   box-shadow: 0 0 8px var(--status-green);
 }
 
-.status-dot.warning {
-  background: var(--status-yellow);
-}
-
-/* Main Layout Grid */
 .app-main {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -175,7 +155,6 @@ body {
   flex: 1;
 }
 
-/* Camera Viewport Section */
 .viewport-card {
   position: relative;
   display: flex;
@@ -196,11 +175,51 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(0, 243, 255, 0.2);
 }
 
-/* Video is hidden; Canvas displays mirrored feed + landmarks */
+/* Audio Start Overlay Button */
+.audio-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 7, 10, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.audio-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.synth-start-btn {
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(0, 102, 255, 0.4));
+  border: 1px solid var(--cyan-main);
+  color: #fff;
+  padding: 1.25rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 0 30px var(--cyan-glow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.synth-start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 45px var(--cyan-main);
+}
+
 #webcam {
   display: none;
 }
@@ -209,10 +228,9 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: scaleX(-1); /* Mirror canvas feed */
+  transform: scaleX(-1);
 }
 
-/* Viewport Floating HUD Elements */
 .hud-top-left {
   position: absolute;
   top: 1rem;
@@ -229,7 +247,6 @@ body {
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
 
 .metric-label {
@@ -263,7 +280,6 @@ body {
   gap: 0.5rem;
   font-size: 0.85rem;
   color: var(--text-muted);
-  transition: all var(--transition-fast);
 }
 
 .hand-indicator.detected {
@@ -272,10 +288,9 @@ body {
   box-shadow: 0 0 12px var(--cyan-dim);
 }
 
-/* Bottom Center Gesture HUD Display */
 .hud-bottom-center {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
@@ -283,13 +298,12 @@ body {
 
 .gesture-display-card {
   background: rgba(5, 7, 10, 0.85);
-  border: 1px solid var(--cyan-main);
+  border: 1px solid var(--gold-accent);
   backdrop-filter: blur(16px);
-  padding: 0.75rem 2rem;
+  padding: 0.75rem 2.5rem;
   border-radius: 40px;
   text-align: center;
-  box-shadow: 0 0 30px var(--cyan-glow);
-  transition: transform var(--transition-fast);
+  box-shadow: 0 0 30px rgba(255, 183, 0, 0.3);
 }
 
 .gesture-sub {
@@ -301,20 +315,18 @@ body {
 }
 
 .gesture-title {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--cyan-main);
+  color: var(--gold-accent);
   letter-spacing: 0.05em;
-  text-shadow: 0 0 10px var(--cyan-glow);
+  text-shadow: 0 0 12px rgba(255, 183, 0, 0.5);
 }
 
-/* Sidebar Panel & Gesture Cards */
 .sidebar-panel {
   display: flex;
   flex-direction: column;
   padding: 1.25rem;
   gap: 1rem;
-  max-height: 100%;
 }
 
 .panel-header {
@@ -323,11 +335,6 @@ body {
   align-items: center;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.panel-header h3 {
-  font-size: 1rem;
-  font-weight: 600;
 }
 
 .badge {
@@ -346,23 +353,13 @@ body {
   gap: 0.5rem;
   overflow-y: auto;
   flex: 1;
-  padding-right: 0.25rem;
-}
-
-/* Custom Scrollbar */
-.gesture-grid::-webkit-scrollbar {
-  width: 4px;
-}
-.gesture-grid::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.2);
-  border-radius: 4px;
 }
 
 .gesture-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 0.85rem;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
@@ -370,9 +367,9 @@ body {
 }
 
 .gesture-card.active {
-  background: var(--cyan-dim);
-  border-color: var(--cyan-main);
-  box-shadow: 0 0 12px var(--cyan-dim);
+  background: rgba(255, 183, 0, 0.15);
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 15px rgba(255, 183, 0, 0.25);
   transform: translateX(4px);
 }
 
@@ -391,19 +388,15 @@ body {
   font-weight: 500;
 }
 
-.gesture-state {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+.gesture-chord {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--cyan-main);
+  background: rgba(0, 243, 255, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
 }
 
-.gesture-card.active .gesture-state {
-  background: var(--cyan-main);
-  box-shadow: 0 0 8px var(--cyan-main);
-}
-
-/* Extensibility Footer Note */
 .extensibility-card {
   background: rgba(0, 243, 255, 0.03);
   border: 1px dashed var(--glass-border);
@@ -421,7 +414,6 @@ body {
   color: var(--text-muted);
 }
 
-/* App Footer */
 .app-footer {
   display: flex;
   align-items: center;
@@ -429,45 +421,10 @@ body {
   gap: 0.75rem;
   font-size: 0.75rem;
   color: var(--text-muted);
-  padding: 0.5rem;
 }
 
-.footer-divider {
-  opacity: 0.4;
-}
-
-/* Mobile & Tablet Responsiveness */
 @media (max-width: 1024px) {
   .app-main {
     grid-template-columns: 1fr;
-  }
-  
-  .sidebar-panel {
-    max-height: 400px;
-  }
-}
-
-@media (max-width: 640px) {
-  .app-wrapper {
-    padding: 0.75rem;
-  }
-  
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .viewport-card {
-    min-height: 380px;
-    padding: 0.5rem;
-  }
-  
-  .gesture-display-card {
-    padding: 0.5rem 1.25rem;
-  }
-  
-  .gesture-title {
-    font-size: 1.15rem;
   }
 }
