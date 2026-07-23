@@ -1,56 +1,119 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gesture Synth AI - Real-time Custom Gesture Engine</title>
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- MediaPipe Dependencies via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-<title>Gesture Synth AI</title>
-
-<link rel="stylesheet" href="style.css">
-
-
-<!-- MediaPipe Libraries -->
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
-
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
 </head>
-
-
 <body>
+  <div class="app-wrapper">
+    <!-- Header Navigation -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <span class="pulse-ring"></span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
+            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6"></path>
+            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
+            <path d="M18 8a2 2 0 0 1 2 2v6a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-1"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Gesture Synth <span class="accent-text">AI</span></h1>
+          <p class="subtitle">Custom Extensible Gesture Engine</p>
+        </div>
+      </div>
 
+      <div class="system-status">
+        <div class="status-badge" id="camera-status">
+          <span class="status-dot warning"></span>
+          <span id="camera-status-text">Initializing Camera...</span>
+        </div>
+      </div>
+    </header>
 
-<h1>✋ Gesture Synth AI</h1>
+    <!-- Main Content Grid -->
+    <main class="app-main">
+      <!-- Camera & Canvas Viewport Section -->
+      <section class="viewport-card glass-panel">
+        <div class="viewport-container" id="viewport-container">
+          <!-- Hidden source video -->
+          <video id="webcam" playsinline muted></video>
+          <!-- Mirrored display canvas -->
+          <canvas id="output-canvas"></canvas>
 
+          <!-- Floating HUD Overlays -->
+          <div class="hud-top-left">
+            <div class="hud-metric">
+              <span class="metric-label">FPS</span>
+              <span class="metric-value" id="val-fps">0</span>
+            </div>
+            <div class="hud-metric">
+              <span class="metric-label">Confidence</span>
+              <span class="metric-value" id="val-confidence">0%</span>
+            </div>
+          </div>
 
+          <div class="hud-top-right">
+            <div class="hand-indicator" id="hand-indicator">
+              <span class="indicator-icon">🖐</span>
+              <span id="val-hand-presence">No Hand</span>
+            </div>
+          </div>
 
-<div class="container">
+          <!-- Main Active Gesture Banner -->
+          <div class="hud-bottom-center">
+            <div class="gesture-display-card">
+              <span class="gesture-sub">Detected Gesture</span>
+              <h2 class="gesture-title" id="val-gesture">NONE</h2>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      <!-- Sidebar: Active Slots & Extension Hub -->
+      <aside class="sidebar-panel glass-panel">
+        <div class="panel-header">
+          <h3>Recognized Gestures</h3>
+          <span class="badge" id="gesture-count-badge">10 Active</span>
+        </div>
 
-<video id="video" autoplay playsinline></video>
+        <div class="gesture-grid" id="gesture-grid">
+          <!-- Dynamically populated gesture cards -->
+        </div>
 
+        <div class="panel-footer">
+          <div class="extensibility-card">
+            <h4>⚡ Developer Pipeline Active</h4>
+            <p>Gesture Engine event bus ready for IoT, WebSockets, or Game Controller hooks.</p>
+          </div>
+        </div>
+      </aside>
+    </main>
 
-<canvas id="canvas"></canvas>
+    <!-- Footer Status -->
+    <footer class="app-footer">
+      <span>Gesture Synth Engine v2.0 (Vanilla JS)</span>
+      <span class="footer-divider">•</span>
+      <span>60 FPS Hardware Accelerated</span>
+    </footer>
+  </div>
 
-
-</div>
-
-
-
-<h2 id="result">
-Loading AI...
-</h2>
-
-
-
-
-<script src="app.js"></script>
-
-
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
 </body>
-
-
 </html>
