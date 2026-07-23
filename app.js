@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Final Mobile Performance Fixed Controller
+ * Gesture Synth AI - Final Mobile Performance & Audio Fixed Engine
  * ============================================================================
  */
 class UIController {
@@ -26,6 +26,7 @@ class UIController {
   }
 
   initSidebar() {
+    if (!this.elements.gestureGrid) return;
     this.elements.gestureGrid.innerHTML = '';
     
     this.engine.gestureRules.forEach((rule) => {
@@ -46,20 +47,22 @@ class UIController {
   }
 
   updateCameraReady() {
-    this.elements.cameraStatusText.textContent = 'Virtual Guitar Active';
-    this.elements.cameraStatusDot.className = 'status-dot active';
+    if (this.elements.cameraStatusText) this.elements.cameraStatusText.textContent = 'Virtual Guitar Active';
+    if (this.elements.cameraStatusDot) this.elements.cameraStatusDot.className = 'status-dot active';
   }
 
   updateMetrics(fps, confidence, handDetected) {
-    this.elements.fps.textContent = Math.round(fps);
-    this.elements.confidence.textContent = handDetected ? `${Math.round(confidence * 100)}%` : '0%';
+    if (this.elements.fps) this.elements.fps.textContent = Math.round(fps);
+    if (this.elements.confidence) this.elements.confidence.textContent = handDetected ? `${Math.round(confidence * 100)}%` : '0%';
 
-    if (handDetected) {
-      this.elements.handPresence.textContent = 'Hand Strumming';
-      this.elements.handIndicator.classList.add('detected');
-    } else {
-      this.elements.handPresence.textContent = 'No Hand';
-      this.elements.handIndicator.classList.remove('detected');
+    if (this.elements.handPresence && this.elements.handIndicator) {
+      if (handDetected) {
+        this.elements.handPresence.textContent = 'Hand Strumming';
+        this.elements.handIndicator.classList.add('detected');
+      } else {
+        this.elements.handPresence.textContent = 'No Hand';
+        this.elements.handIndicator.classList.remove('detected');
+      }
     }
   }
 
@@ -67,11 +70,11 @@ class UIController {
     this.gestureCards.forEach(card => card.classList.remove('active'));
 
     if (!gesture || gesture.id === 'NONE' || !chord) {
-      this.elements.gestureTitle.textContent = 'SILENT';
+      if (this.elements.gestureTitle) this.elements.gestureTitle.textContent = 'SILENT';
       return;
     }
 
-    this.elements.gestureTitle.textContent = `${gesture.icon} ${chord.name}`;
+    if (this.elements.gestureTitle) this.elements.gestureTitle.textContent = `${gesture.icon} ${chord.name}`;
 
     const activeCard = this.gestureCards.get(gesture.id);
     if (activeCard) {
@@ -100,9 +103,25 @@ class App {
   }
 
   bindEvents() {
+    if (!this.ui.elements.btnStartSynth) return;
+
     this.ui.elements.btnStartSynth.addEventListener('click', async () => {
+      try {
+        // Mobile Web Audio Context Unlock
+        if (window.Tone) {
+          await Tone.start();
+          if (Tone.context.state !== 'running') {
+            await Tone.context.resume();
+          }
+        }
+      } catch (e) {
+        console.error('Tone Unlock Error:', e);
+      }
+
       await this.soundEngine.init();
-      this.ui.elements.audioOverlay.classList.add('hidden');
+      if (this.ui.elements.audioOverlay) {
+        this.ui.elements.audioOverlay.classList.add('hidden');
+      }
       this.initMediaPipe();
     });
   }
@@ -112,7 +131,7 @@ class App {
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
 
-    // Extreme Mobile Optimization Settings
+    // Mobile FPS and Speed Boost
     this.hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 0,
@@ -132,7 +151,7 @@ class App {
         this.ui.elements.cameraStatusText.textContent = 'Connecting Camera...';
       }
 
-      // 320x240 Resolution: মোবাইল প্রসেসরের জন্য সবচেয়ে ফাস্ট ও ল্যাগ-ফ্রি
+      // 320x240 Resolution: Light-weight for mobile GPU/CPU
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: 'user', 
@@ -156,13 +175,15 @@ class App {
       this.renderLoop();
     } catch (err) {
       console.error('Camera Access Error:', err);
+      if (this.ui.elements.cameraStatusText) {
+        this.ui.elements.cameraStatusText.textContent = 'Camera Denied';
+      }
     }
   }
 
   async renderLoop() {
     if (!this.isCameraRunning) return;
 
-    // আগের ফ্রেম প্রসেসিং শেষ না হলে নতুন ফ্রেমে হাত দিবে না (হ্যাং হওয়া রোধ করতে)
     if (this.videoElement.readyState >= 2 && !this.isProcessing) {
       this.isProcessing = true;
       try {
@@ -203,12 +224,11 @@ class App {
       handFound = true;
       const landmarks = results.multiHandLandmarks[0];
 
-      // Minimal Point Drawing
       this.drawFastHandMesh(ctx, landmarks, width, height);
 
       detectedGesture = this.gestureEngine.evaluate(landmarks);
 
-      // ⚡ গুরুত্বপূর্ণ ফিক্স: একই জেয়েসচার বারবার সাউন্ড ট্রিগার করবে না, শুধু নতুন জেয়েসচার আসলে বাজবে
+      // Audio Trigger Debounce
       if (detectedGesture.id !== this.lastActiveGestureId) {
         this.lastActiveGestureId = detectedGesture.id;
         activeChord = this.soundEngine.playChord(detectedGesture.id);
@@ -216,8 +236,10 @@ class App {
         activeChord = this.soundEngine.chordMap[detectedGesture.id] || null;
       }
     } else {
-      this.lastActiveGestureId = null;
-      this.soundEngine.stopAll();
+      if (this.lastActiveGestureId !== null) {
+        this.lastActiveGestureId = null;
+        this.soundEngine.stopAll();
+      }
     }
 
     this.drawAudioWaveform(ctx, width, height);
@@ -229,7 +251,7 @@ class App {
 
   drawFastHandMesh(ctx, landmarks, width, height) {
     ctx.fillStyle = '#ffb700';
-    for (let i = 0; i < landmarks.length; i += 2) { // প্রতি ২ টি পয়েন্টের ১টি ড্র করবে স্পিড বাড়ানোর জন্য
+    for (let i = 0; i < landmarks.length; i += 2) {
       const x = landmarks[i].x * width;
       const y = landmarks[i].y * height;
       ctx.fillRect(x - 2, y - 2, 4, 4);
@@ -248,7 +270,7 @@ class App {
     const sliceWidth = width / wave.length;
     let x = 0;
 
-    for (let i = 0; i < wave.length; i += 4) { // স্যাম্পল কমিয়ে ফাস্ট করা হয়েছে
+    for (let i = 0; i < wave.length; i += 4) {
       const v = wave[i];
       const y = baseline + v * 15;
 
