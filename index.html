@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Gesture Synth AI - Modular Virtual Guitar</title>
-  
+
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- MediaPipe CDN Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.4/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
@@ -26,7 +26,6 @@
     <header class="app-header">
       <div class="brand">
         <div class="logo-icon">
-          <span class="pulse-ring"></span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 18V5l12-2v13"></path>
             <circle cx="6" cy="18" r="3"></circle>
@@ -35,7 +34,7 @@
         </div>
         <div>
           <h1>Gesture Synth <span class="accent-text">AI</span></h1>
-          <p class="subtitle">Virtual Guitar & Instrument Engine</p>
+          <p class="subtitle">Virtual Air Guitar Engine</p>
         </div>
       </div>
 
@@ -60,7 +59,8 @@
             </button>
           </div>
 
-          <video id="webcam" playsinline muted></video>
+          <!-- Hidden raw video element -->
+          <video id="webcam" playsinline muted style="display: none;"></video>
           <canvas id="output-canvas"></canvas>
 
           <!-- Top HUD Overlay -->
@@ -78,14 +78,14 @@
           <div class="hud-top-right">
             <div class="hand-indicator" id="hand-indicator">
               <span class="indicator-icon">🖐</span>
-              <span id="val-hand-presence">No Hand</span>
+              <span id="val-hand-presence">Show 2 Hands</span>
             </div>
           </div>
 
           <!-- Active Chord Banner -->
           <div class="hud-bottom-center">
             <div class="gesture-display-card">
-              <span class="gesture-sub">Playing Chord</span>
+              <span class="gesture-sub">Current Status</span>
               <h2 class="gesture-title" id="val-gesture">SILENT</h2>
             </div>
           </div>
@@ -103,21 +103,21 @@
 
         <div class="panel-footer">
           <div class="extensibility-card">
-            <h4>⚡ Multi-Module Pipeline</h4>
-            <p>Audio Engine, 3D Vector Math & Visualizer are fully decoupled for future expansion.</p>
+            <h4>⚡ How to Play (২ হাতের নিয়ম)</h4>
+            <p>• <b>বাম হাত:</b> কর্ড সিলেক্ট করুন (যেমন: ✋, ✊, ✌️)<br>• <b>ডান হাত:</b> তর্জনী ও বৃদ্ধাঙ্গুলি চিমটি (Pinch 👌) কাটলেই তার বাজবে!</p>
           </div>
         </div>
       </aside>
     </main>
 
     <footer class="app-footer">
-      <span>Gesture Synth Engine v3.5 (Modular Architecture)</span>
+      <span>Gesture Synth Engine v3.5</span>
       <span class="footer-divider">•</span>
-      <span>Real-Time Waveform & Polyphonic Guitar Synth</span>
+      <span>Real-Time Pinch-Pluck Guitar Synth</span>
     </footer>
   </div>
 
-  <!-- Modular Scripts Import (Order matters) -->
+  <!-- Modular Scripts Import -->
   <script src="gestures.js"></script>
   <script src="synth.js"></script>
   <script src="app.js"></script>
