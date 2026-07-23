@@ -1,5 +1,5 @@
 /* ============================================================================
-   Gesture Synth AI - Styled for HTML Structure (Dark Glassmorphism UI)
+   Gesture Synth AI - Glassmorphism Responsive UI
    ============================================================================ */
 :root {
   --bg-dark: #080b12;
@@ -223,14 +223,8 @@ body {
   gap: 0.4rem;
 }
 
-.metric-label {
-  color: var(--text-secondary);
-}
-
-.metric-value {
-  color: var(--accent-cyan);
-  font-weight: 600;
-}
+.metric-label { color: var(--text-secondary); }
+.metric-value { color: var(--accent-cyan); font-weight: 600; }
 
 .hud-top-right {
   position: absolute;
@@ -308,10 +302,7 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.panel-header h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
+.panel-header h3 { font-size: 0.95rem; font-weight: 600; }
 
 .badge {
   background: rgba(0, 243, 255, 0.15);
@@ -358,9 +349,7 @@ body {
 .gesture-name { font-size: 0.8rem; color: var(--text-secondary); }
 .gesture-chord { font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); }
 
-.panel-footer {
-  margin-top: auto;
-}
+.panel-footer { margin-top: auto; }
 
 .extensibility-card {
   background: rgba(255, 255, 255, 0.02);
@@ -376,12 +365,11 @@ body {
 }
 
 .extensibility-card p {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
   line-height: 1.4;
 }
 
-/* Footer */
 .app-footer {
   text-align: center;
   font-size: 0.7rem;
@@ -393,6 +381,4 @@ body {
   padding: 0.5rem 0;
 }
 
-.footer-divider {
-  color: var(--panel-border);
-}
+.footer-divider { color: var(--panel-border); }
