@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Main Controller (Left Hand = Chord, Right Hand = Pinch/Pluck)
+ * Gesture Synth AI - Main Controller with Mirrored Camera (Left=Chord, Right=Pluck)
  * ============================================================================
  */
 class UIController {
@@ -47,7 +47,7 @@ class UIController {
   }
 
   updateCameraReady() {
-    if (this.elements.cameraStatusText) this.elements.cameraStatusText.textContent = '2-Hand Guitar Ready';
+    if (this.elements.cameraStatusText) this.elements.cameraStatusText.textContent = 'Mirrored Guitar Ready';
     if (this.elements.cameraStatusDot) this.elements.cameraStatusDot.className = 'status-dot active';
   }
 
@@ -213,7 +213,12 @@ class App {
     const width = this.canvasElement.width;
     const height = this.canvasElement.height;
 
+    // 🪞 MIRROR EFFECT START
     ctx.save();
+    ctx.scale(-1, 1);
+    ctx.translate(-width, 0);
+
+    // Draw mirrored camera feed
     ctx.drawImage(results.image, 0, 0, width, height);
 
     let chordName = 'C Major';
@@ -223,13 +228,15 @@ class App {
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       handsCount = results.multiHandLandmarks.length;
 
-      // Sort hands by X coordinate on screen
+      // Sort hands based on mirrored screen X position
+      // Screen Left = smallest screenX, Screen Right = largest screenX
       const hands = results.multiHandLandmarks.map(landmarks => {
         const avgX = landmarks.reduce((sum, pt) => sum + pt.x, 0) / landmarks.length;
-        return { landmarks, avgX };
-      }).sort((a, b) => a.avgX - b.avgX);
+        const screenX = 1 - avgX; // Calculate position on mirrored screen
+        return { landmarks, screenX };
+      }).sort((a, b) => a.screenX - b.screenX);
 
-      // Left hand on camera = Chord Hand
+      // Hand on Screen Left (Your physical Left Hand) = CHORD HAND
       const leftHandLandmarks = hands[0].landmarks;
       const detectedGesture = this.gestureEngine.evaluate(leftHandLandmarks);
       this.currentSelectedChordId = detectedGesture.id;
@@ -237,7 +244,7 @@ class App {
 
       this.drawHandMesh(ctx, leftHandLandmarks, width, height, '#00f3ff');
 
-      // Right hand on camera = Pluck/Pinch Hand
+      // Hand on Screen Right (Your physical Right Hand) = PLUCK HAND
       if (hands.length > 1) {
         const rightHandLandmarks = hands[1].landmarks;
         this.drawHandMesh(ctx, rightHandLandmarks, width, height, '#ffb700');
@@ -247,7 +254,7 @@ class App {
         const indexTip = rightHandLandmarks[8];
         const pinchDistance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
 
-        // Pinch detection threshold (0.05) & cooldown (250ms)
+        // Pinch trigger (< 0.05) & cooldown (250ms)
         if (pinchDistance < 0.05 && (now - this.lastPluckTime > 250)) {
           this.soundEngine.strumChord(this.currentSelectedChordId);
           this.lastPluckTime = now;
@@ -256,6 +263,10 @@ class App {
       }
     }
 
+    ctx.restore(); // 🪞 MIRROR EFFECT END
+
+    // Draw Waveform in normal orientation
+    ctx.save();
     this.drawAudioWaveform(ctx, width, height);
     ctx.restore();
 
