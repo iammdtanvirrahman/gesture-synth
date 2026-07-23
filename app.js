@@ -1,172 +1,8 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Virtual Instrument Sound & Gesture Engine
+ * Gesture Synth AI - Application Main Controller & Visualizer
  * ============================================================================
  */
-
-// ============================================================================
-// 1. SOUND & AUDIO SYNTH ENGINE (Tone.js Integration)
-// ============================================================================
-class SoundEngine {
-  constructor() {
-    this.synth = null;
-    this.waveform = null;
-    this.currentChordId = null;
-    this.isAudioReady = false;
-
-    // Gesture ID -> Musical Chord Definition
-    this.chordMap = {
-      'fist': { name: 'C Major', notes: ['C3', 'E3', 'G3', 'C4'] },
-      'point_up': { name: 'D Minor', notes: ['D3', 'F3', 'A3', 'D4'] },
-      'victory': { name: 'E Minor', notes: ['E3', 'G3', 'B3', 'E4'] },
-      'three_fingers': { name: 'F Major', notes: ['F3', 'A3', 'C4', 'F4'] },
-      'four_fingers': { name: 'G Major', notes: ['G3', 'B3', 'D4', 'G4'] },
-      'open_palm': { name: 'A Minor', notes: ['A3', 'C4', 'E4', 'A4'] },
-      'rock_on': { name: 'E Power Chord', notes: ['E2', 'B2', 'E3', 'G#3'] },
-      'ok_gesture': { name: 'High C Strum', notes: ['C4', 'E4', 'G4', 'C5'] }
-    };
-  }
-
-  async init() {
-    await Tone.start();
-
-    // Guitar / Plucked String Polyphonic Synthesizer
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: {
-        attack: 0.005, // Fast pluck
-        decay: 1.2,    // String vibration decay
-        sustain: 0.1,
-        release: 1.2
-      }
-    }).toDestination();
-
-    // Reverb & Delay Effects
-    const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination();
-    this.synth.connect(reverb);
-
-    // Audio Waveform Analyzer for Visualizer
-    this.waveform = new Tone.Waveform(128);
-    Tone.Destination.connect(this.waveform);
-
-    this.isAudioReady = true;
-  }
-
-  playChord(gestureId) {
-    if (!this.isAudioReady) return null;
-
-    if (this.currentChordId === gestureId) return this.chordMap[gestureId];
-
-    // Release active notes
-    this.synth.releaseAll();
-
-    const chord = this.chordMap[gestureId];
-    if (chord) {
-      // Trigger new chord
-      this.synth.triggerAttack(chord.notes);
-      this.currentChordId = gestureId;
-      return chord;
-    } else {
-      this.currentChordId = null;
-      return null;
-    }
-  }
-
-  stopAll() {
-    if (this.isAudioReady && this.currentChordId) {
-      this.synth.releaseAll();
-      this.currentChordId = null;
-    }
-  }
-
-  getWaveformData() {
-    return this.waveform ? this.waveform.getValue() : null;
-  }
-}
-
-// ============================================================================
-// 2. GESTURE RECOGNITION ENGINE
-// ============================================================================
-class GestureEngine {
-  constructor() {
-    this.gestureRules = new Map();
-    this._registerDefaults();
-  }
-
-  registerGesture(id, name, icon, evaluator) {
-    this.gestureRules.set(id, { id, name, icon, evaluator });
-  }
-
-  evaluate(landmarks) {
-    if (!landmarks || landmarks.length < 21) {
-      return { id: 'NONE', name: 'SILENT', icon: '❓' };
-    }
-
-    const fingerState = this._analyzeFingers(landmarks);
-
-    for (const [id, rule] of this.gestureRules) {
-      if (rule.evaluator(landmarks, fingerState)) {
-        return { id: rule.id, name: rule.name, icon: rule.icon };
-      }
-    }
-
-    return { id: 'NONE', name: 'SILENT', icon: '✋' };
-  }
-
-  _analyzeFingers(lm) {
-    const wrist = lm[0];
-    const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
-
-    const fingers = {
-      thumb: dist(lm[4], lm[17]) > dist(lm[3], lm[17]),
-      index: dist(lm[8], wrist) > dist(lm[6], wrist),
-      middle: dist(lm[12], wrist) > dist(lm[10], wrist),
-      ring: dist(lm[16], wrist) > dist(lm[14], wrist),
-      pinky: dist(lm[20], wrist) > dist(lm[18], wrist)
-    };
-
-    return { fingers, dist };
-  }
-
-  _registerDefaults() {
-    this.registerGesture('open_palm', 'A Minor', '✋', (lm, s) => 
-      s.fingers.thumb && s.fingers.index && s.fingers.middle && s.fingers.ring && s.fingers.pinky
-    );
-
-    this.registerGesture('fist', 'C Major', '✊', (lm, s) => 
-      !s.fingers.index && !s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
-    );
-
-    this.registerGesture('point_up', 'D Minor', '☝️', (lm, s) => 
-      s.fingers.index && !s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
-    );
-
-    this.registerGesture('victory', 'E Minor', '✌️', (lm, s) => 
-      s.fingers.index && s.fingers.middle && !s.fingers.ring && !s.fingers.pinky
-    );
-
-    this.registerGesture('three_fingers', 'F Major', '🤟', (lm, s) => 
-      s.fingers.index && s.fingers.middle && s.fingers.ring && !s.fingers.pinky
-    );
-
-    this.registerGesture('four_fingers', 'G Major', '4️⃣', (lm, s) => 
-      !s.fingers.thumb && s.fingers.index && s.fingers.middle && s.fingers.ring && s.fingers.pinky
-    );
-
-    this.registerGesture('rock_on', 'E Power Chord', '🤘', (lm, s) => 
-      s.fingers.index && !s.fingers.middle && !s.fingers.ring && s.fingers.pinky
-    );
-
-    this.registerGesture('ok_gesture', 'High C Strum', '👌', (lm, s) => {
-      const pinchDist = s.dist(lm[4], lm[8]);
-      return pinchDist < 0.07 && s.fingers.middle && s.fingers.ring;
-    });
-  }
-}
-
-// ============================================================================
-// 3. UI CONTROLLER MODULE
-// ============================================================================
 class UIController {
   constructor(gestureEngine, soundEngine) {
     this.engine = gestureEngine;
@@ -210,7 +46,7 @@ class UIController {
   }
 
   updateCameraReady() {
-    this.elements.cameraStatusText.textContent = 'Synth Ready';
+    this.elements.cameraStatusText.textContent = 'Virtual Guitar Active';
     this.elements.cameraStatusDot.className = 'status-dot active';
   }
 
@@ -219,7 +55,7 @@ class UIController {
     this.elements.confidence.textContent = handDetected ? `${Math.round(confidence * 100)}%` : '0%';
 
     if (handDetected) {
-      this.elements.handPresence.textContent = 'Playing Hand';
+      this.elements.handPresence.textContent = 'Hand Strumming';
       this.elements.handIndicator.classList.add('detected');
     } else {
       this.elements.handPresence.textContent = 'No Hand';
@@ -244,16 +80,13 @@ class UIController {
   }
 }
 
-// ============================================================================
-// 4. MAIN APPLICATION
-// ============================================================================
 class App {
   constructor() {
     this.videoElement = document.getElementById('webcam');
     this.canvasElement = document.getElementById('output-canvas');
     this.canvasCtx = this.canvasElement.getContext('2d');
 
-    this.soundEngine = new SoundEngine();
+    this.soundEngine = new GuitarSynthEngine();
     this.gestureEngine = new GestureEngine();
     this.ui = new UIController(this.gestureEngine, this.soundEngine);
 
@@ -341,7 +174,6 @@ class App {
     this.canvasCtx.save();
     this.canvasCtx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
 
-    // Draw Video Feed
     this.canvasCtx.drawImage(
       results.image, 0, 0, this.canvasElement.width, this.canvasElement.height
     );
@@ -354,17 +186,13 @@ class App {
       handFound = true;
       const landmarks = results.multiHandLandmarks[0];
 
-      // Draw Hand Landmarks
       this.drawHandMesh(landmarks);
-
-      // Recognize Gesture & Play Audio Chord
       detectedGesture = this.gestureEngine.evaluate(landmarks);
       activeChord = this.soundEngine.playChord(detectedGesture.id);
     } else {
       this.soundEngine.stopAll();
     }
 
-    // Draw Audio Waveform (Like in reel screenshot)
     this.drawAudioWaveform();
 
     this.canvasCtx.restore();
@@ -387,9 +215,6 @@ class App {
     });
   }
 
-  /**
-   * Draws dynamic audio visualizer line across bottom of video (as shown in reel)
-   */
   drawAudioWaveform() {
     const wave = this.soundEngine.getWaveformData();
     if (!wave) return;
