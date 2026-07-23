@@ -5,14 +5,13 @@ const ctx = canvas.getContext("2d");
 const result = document.getElementById("result");
 
 
-// Camera start
+// Camera
+
 async function startCamera(){
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video:{
-            width:640,
-            height:480
-        }
+    const stream =
+    await navigator.mediaDevices.getUserMedia({
+        video:true
     });
 
     video.srcObject = stream;
@@ -20,6 +19,7 @@ async function startCamera(){
 }
 
 startCamera();
+
 
 
 // MediaPipe Hands
@@ -33,7 +33,7 @@ const hands = new Hands({
 
 hands.setOptions({
 
-    maxNumHands:2,
+    maxNumHands:1,
 
     modelComplexity:1,
 
@@ -44,18 +44,18 @@ hands.setOptions({
 });
 
 
-// Draw hand
 
-const draw = new drawUtils();
+// Result
 
-hands.onResults(results=>{
-
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+hands.onResults((res)=>{
 
 
-    ctx.save();
+    canvas.width =
+    video.videoWidth;
+
+    canvas.height =
+    video.videoHeight;
+
 
     ctx.clearRect(
         0,
@@ -66,7 +66,7 @@ hands.onResults(results=>{
 
 
     ctx.drawImage(
-        results.image,
+        res.image,
         0,
         0,
         canvas.width,
@@ -74,53 +74,50 @@ hands.onResults(results=>{
     );
 
 
-    let gestureText="";
+
+    if(res.multiHandLandmarks){
 
 
-    if(results.multiHandLandmarks){
+        let lm =
+        res.multiHandLandmarks[0];
 
 
-        results.multiHandLandmarks.forEach((landmarks,index)=>{
+        // Draw points
+
+        drawConnectors(
+            ctx,
+            lm,
+            HAND_CONNECTIONS,
+            {
+                color:"#00ffcc",
+                lineWidth:4
+            }
+        );
 
 
-            drawConnectors(
-                ctx,
-                landmarks,
-                HAND_CONNECTIONS,
-                {
-                    color:"#00ffcc",
-                    lineWidth:4
-                }
-            );
-
-
-            drawLandmarks(
-                ctx,
-                landmarks,
-                {
-                    color:"#ff0066",
-                    radius:5
-                }
-            );
-
-
-            let gesture =
-            detectGesture(landmarks);
-
-
-            gestureText +=
-            `Hand ${index+1}: ${gesture}\n`;
+        drawLandmarks(
+            ctx,
+            lm,
+            {
+                color:"#ff0066",
+                radius:5
+            }
+        );
 
 
 
-        });
+        let gesture =
+        detectGesture(lm);
+
 
 
         result.innerText =
-        gestureText;
+        "Hand Detected ✋\nGesture: "
+        + gesture;
 
 
     }
+
     else{
 
         result.innerText =
@@ -129,17 +126,17 @@ hands.onResults(results=>{
     }
 
 
-    ctx.restore();
-
 });
 
 
 
-// Camera processing
 
-const camera = new Camera(video,{
+// Camera loop
 
-    onFrame:async()=>{
+const camera =
+new Camera(video,{
+
+    onFrame: async()=>{
 
         await hands.send({
             image:video
@@ -159,7 +156,7 @@ camera.start();
 
 
 
-// Gesture Recognition
+// Gesture AI
 
 function detectGesture(lm){
 
@@ -168,13 +165,17 @@ function detectGesture(lm){
 
 
     // Thumb
-    if(lm[4].x < lm[3].x)
-    {
+
+    if(lm[4].x < lm[3].x){
+
         fingers.push(1);
+
     }
-    else
-    {
+
+    else{
+
         fingers.push(0);
+
     }
 
 
@@ -188,7 +189,8 @@ function detectGesture(lm){
         20
     ];
 
-    let bases=[
+
+    let joints=[
         6,
         10,
         14,
@@ -196,21 +198,28 @@ function detectGesture(lm){
     ];
 
 
+
     for(let i=0;i<4;i++){
 
+
         if(
-            lm[tips[i]].y <
-            lm[bases[i]].y
-        )
-        {
+        lm[tips[i]].y <
+        lm[joints[i]].y
+        ){
+
             fingers.push(1);
-        }
-        else
-        {
-            fingers.push(0);
+
         }
 
+        else{
+
+            fingers.push(0);
+
+        }
+
+
     }
+
 
 
 
@@ -222,20 +231,32 @@ function detectGesture(lm){
 
 
 
-    if(count===5)
+    if(count===5){
+
         return "MAJOR 🎸";
 
+    }
 
-    if(count===2)
+
+    if(count===2){
+
         return "V 🎵";
 
+    }
 
-    if(count===1)
+
+    if(count===1){
+
         return "I 🎶";
 
+    }
 
-    if(count===0)
+
+    if(count===0){
+
         return "REST";
+
+    }
 
 
     return "UNKNOWN";
