@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Application Main Controller & Visualizer (Lag Fixed)
+ * Gesture Synth AI - Final Mobile Performance Fixed Controller
  * ============================================================================
  */
 class UIController {
@@ -91,10 +91,10 @@ class App {
     this.ui = new UIController(this.gestureEngine, this.soundEngine);
 
     this.lastFrameTime = performance.now();
-    this.lastProcessTime = 0;
     this.currentFps = 0;
     this.isCameraRunning = false;
     this.isProcessing = false;
+    this.lastActiveGestureId = null;
 
     this.bindEvents();
   }
@@ -112,12 +112,12 @@ class App {
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
 
-    // Lite Model for Mobile Speed
+    // Extreme Mobile Optimization Settings
     this.hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 0,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      minDetectionConfidence: 0.4,
+      minTrackingConfidence: 0.4
     });
 
     this.hands.onResults((results) => this.onResults(results));
@@ -132,11 +132,13 @@ class App {
         this.ui.elements.cameraStatusText.textContent = 'Connecting Camera...';
       }
 
+      // 320x240 Resolution: মোবাইল প্রসেসরের জন্য সবচেয়ে ফাস্ট ও ল্যাগ-ফ্রি
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: 'user', 
-          width: { ideal: 480 }, 
-          height: { ideal: 360 } 
+          width: { ideal: 320 }, 
+          height: { ideal: 240 },
+          frameRate: { max: 24 }
         },
         audio: false
       });
@@ -160,14 +162,14 @@ class App {
   async renderLoop() {
     if (!this.isCameraRunning) return;
 
-    const now = performance.now();
-    
-    // Throttling: AI প্রসেসিং প্রতি ৫০ মিলি-সেকেন্ডে একবার হবে (Max 20 AI FPS)
-    // এর ফলে সিপিইউ ফ্রি থাকবে এবং ভিডিও আটকাবে না
-    if (this.videoElement.readyState >= 2 && !this.isProcessing && (now - this.lastProcessTime > 50)) {
+    // আগের ফ্রেম প্রসেসিং শেষ না হলে নতুন ফ্রেমে হাত দিবে না (হ্যাং হওয়া রোধ করতে)
+    if (this.videoElement.readyState >= 2 && !this.isProcessing) {
       this.isProcessing = true;
-      this.lastProcessTime = now;
-      await this.hands.send({ image: this.videoElement });
+      try {
+        await this.hands.send({ image: this.videoElement });
+      } catch (e) {
+        console.error(e);
+      }
       this.isProcessing = false;
     }
 
@@ -201,31 +203,36 @@ class App {
       handFound = true;
       const landmarks = results.multiHandLandmarks[0];
 
-      // Ultra-fast Light Hand Draw
+      // Minimal Point Drawing
       this.drawFastHandMesh(ctx, landmarks, width, height);
 
       detectedGesture = this.gestureEngine.evaluate(landmarks);
-      activeChord = this.soundEngine.playChord(detectedGesture.id);
+
+      // ⚡ গুরুত্বপূর্ণ ফিক্স: একই জেয়েসচার বারবার সাউন্ড ট্রিগার করবে না, শুধু নতুন জেয়েসচার আসলে বাজবে
+      if (detectedGesture.id !== this.lastActiveGestureId) {
+        this.lastActiveGestureId = detectedGesture.id;
+        activeChord = this.soundEngine.playChord(detectedGesture.id);
+      } else {
+        activeChord = this.soundEngine.chordMap[detectedGesture.id] || null;
+      }
     } else {
+      this.lastActiveGestureId = null;
       this.soundEngine.stopAll();
     }
 
-    // Fast Audio Waveform
     this.drawAudioWaveform(ctx, width, height);
-
     ctx.restore();
 
-    this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.9, handFound);
+    this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.8, handFound);
     this.ui.setActiveGesture(detectedGesture, activeChord);
   }
 
-  // মিডিয়াপাইপের ভারী ড্রয়িং উঠিয়ে দিয়ে একদম হালকা ড্রয়িং বসানো হয়েছে
   drawFastHandMesh(ctx, landmarks, width, height) {
     ctx.fillStyle = '#ffb700';
-    for (let i = 0; i < landmarks.length; i++) {
+    for (let i = 0; i < landmarks.length; i += 2) { // প্রতি ২ টি পয়েন্টের ১টি ড্র করবে স্পিড বাড়ানোর জন্য
       const x = landmarks[i].x * width;
       const y = landmarks[i].y * height;
-      ctx.fillRect(x - 3, y - 3, 6, 6);
+      ctx.fillRect(x - 2, y - 2, 4, 4);
     }
   }
 
@@ -233,24 +240,24 @@ class App {
     const wave = this.soundEngine.getWaveformData();
     if (!wave) return;
 
-    const baseline = height - 50;
+    const baseline = height - 20;
     ctx.beginPath();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#00f3ff'; // Glow blur রিমুভ করা হয়েছে যাতে স্পিড ৫ গুণ বাড়ে
+    ctx.strokeStyle = '#00f3ff';
 
     const sliceWidth = width / wave.length;
     let x = 0;
 
-    for (let i = 0; i < wave.length; i += 2) { // Skip alternate samples for performance
+    for (let i = 0; i < wave.length; i += 4) { // স্যাম্পল কমিয়ে ফাস্ট করা হয়েছে
       const v = wave[i];
-      const y = baseline + v * 30;
+      const y = baseline + v * 15;
 
       if (i === 0) {
         ctx.moveTo(x, y);
       } else {
         ctx.lineTo(x, y);
       }
-      x += sliceWidth * 2;
+      x += sliceWidth * 4;
     }
 
     ctx.stroke();
