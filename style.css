@@ -1,37 +1,56 @@
 body{
-    background:#050505;
-    color:white;
-    text-align:center;
-    font-family:Arial;
-}
 
-
-.container{
-    position:relative;
-    width:640px;
-    max-width:90%;
-    margin:auto;
-}
-
-
-video,canvas{
-
-    width:640px;
-    max-width:100%;
-    border-radius:20px;
-
-}
-
-
-canvas{
-
-    position:absolute;
-    left:0;
-    top:0;
+background:black;
+color:white;
+text-align:center;
+font-family:Arial;
 
 }
 
 
 h1{
-    color:#00ffcc;
+
+color:#00ffcc;
+
+}
+
+
+
+.container{
+
+position:relative;
+width:640px;
+max-width:95%;
+margin:auto;
+
+}
+
+
+
+video,canvas{
+
+width:640px;
+height:480px;
+max-width:100%;
+border-radius:20px;
+
+}
+
+
+
+canvas{
+
+position:absolute;
+left:0;
+top:0;
+pointer-events:none;
+
+}
+
+
+
+#status{
+
+color:#00ffcc;
+
 }
