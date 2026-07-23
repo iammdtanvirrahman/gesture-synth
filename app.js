@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Final Mobile Performance & Audio Fixed Engine
+ * Gesture Synth AI - Main Controller (Left Hand = Chord, Right Hand = Pinch/Pluck)
  * ============================================================================
  */
 class UIController {
@@ -47,36 +47,37 @@ class UIController {
   }
 
   updateCameraReady() {
-    if (this.elements.cameraStatusText) this.elements.cameraStatusText.textContent = 'Virtual Guitar Active';
+    if (this.elements.cameraStatusText) this.elements.cameraStatusText.textContent = '2-Hand Guitar Ready';
     if (this.elements.cameraStatusDot) this.elements.cameraStatusDot.className = 'status-dot active';
   }
 
-  updateMetrics(fps, confidence, handDetected) {
+  updateMetrics(fps, confidence, handsCount) {
     if (this.elements.fps) this.elements.fps.textContent = Math.round(fps);
-    if (this.elements.confidence) this.elements.confidence.textContent = handDetected ? `${Math.round(confidence * 100)}%` : '0%';
+    if (this.elements.confidence) this.elements.confidence.textContent = `${Math.round(confidence * 100)}%`;
 
     if (this.elements.handPresence && this.elements.handIndicator) {
-      if (handDetected) {
-        this.elements.handPresence.textContent = 'Hand Strumming';
+      if (handsCount > 0) {
+        this.elements.handPresence.textContent = `${handsCount} Hand(s) Active`;
         this.elements.handIndicator.classList.add('detected');
       } else {
-        this.elements.handPresence.textContent = 'No Hand';
+        this.elements.handPresence.textContent = 'Show 2 Hands';
         this.elements.handIndicator.classList.remove('detected');
       }
     }
   }
 
-  setActiveGesture(gesture, chord) {
+  setActiveGesture(gestureId, chordName, isPlucking) {
     this.gestureCards.forEach(card => card.classList.remove('active'));
 
-    if (!gesture || gesture.id === 'NONE' || !chord) {
-      if (this.elements.gestureTitle) this.elements.gestureTitle.textContent = 'SILENT';
-      return;
+    if (this.elements.gestureTitle) {
+      if (isPlucking) {
+        this.elements.gestureTitle.textContent = `🎸 PLUCK! [${chordName}]`;
+      } else {
+        this.elements.gestureTitle.textContent = `Chord: ${chordName}`;
+      }
     }
 
-    if (this.elements.gestureTitle) this.elements.gestureTitle.textContent = `${gesture.icon} ${chord.name}`;
-
-    const activeCard = this.gestureCards.get(gesture.id);
+    const activeCard = this.gestureCards.get(gestureId);
     if (activeCard) {
       activeCard.classList.add('active');
     }
@@ -97,7 +98,9 @@ class App {
     this.currentFps = 0;
     this.isCameraRunning = false;
     this.isProcessing = false;
-    this.lastActiveGestureId = null;
+
+    this.currentSelectedChordId = 'OPEN_PALM';
+    this.lastPluckTime = 0;
 
     this.bindEvents();
   }
@@ -107,7 +110,6 @@ class App {
 
     this.ui.elements.btnStartSynth.addEventListener('click', async () => {
       try {
-        // Mobile Web Audio Context Unlock
         if (window.Tone) {
           await Tone.start();
           if (Tone.context.state !== 'running') {
@@ -131,9 +133,8 @@ class App {
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
     });
 
-    // Mobile FPS and Speed Boost
     this.hands.setOptions({
-      maxNumHands: 1,
+      maxNumHands: 2,
       modelComplexity: 0,
       minDetectionConfidence: 0.4,
       minTrackingConfidence: 0.4
@@ -151,7 +152,6 @@ class App {
         this.ui.elements.cameraStatusText.textContent = 'Connecting Camera...';
       }
 
-      // 320x240 Resolution: Light-weight for mobile GPU/CPU
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: 'user', 
@@ -174,7 +174,7 @@ class App {
       this.ui.updateCameraReady();
       this.renderLoop();
     } catch (err) {
-      console.error('Camera Access Error:', err);
+      console.error('Camera Error:', err);
       if (this.ui.elements.cameraStatusText) {
         this.ui.elements.cameraStatusText.textContent = 'Camera Denied';
       }
@@ -216,42 +216,56 @@ class App {
     ctx.save();
     ctx.drawImage(results.image, 0, 0, width, height);
 
-    let detectedGesture = { id: 'NONE', name: 'SILENT', icon: '❓' };
-    let activeChord = null;
-    let handFound = false;
+    let chordName = 'C Major';
+    let isPlucked = false;
+    let handsCount = 0;
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      handFound = true;
-      const landmarks = results.multiHandLandmarks[0];
+      handsCount = results.multiHandLandmarks.length;
 
-      this.drawFastHandMesh(ctx, landmarks, width, height);
+      // Sort hands by X coordinate on screen
+      const hands = results.multiHandLandmarks.map(landmarks => {
+        const avgX = landmarks.reduce((sum, pt) => sum + pt.x, 0) / landmarks.length;
+        return { landmarks, avgX };
+      }).sort((a, b) => a.avgX - b.avgX);
 
-      detectedGesture = this.gestureEngine.evaluate(landmarks);
+      // Left hand on camera = Chord Hand
+      const leftHandLandmarks = hands[0].landmarks;
+      const detectedGesture = this.gestureEngine.evaluate(leftHandLandmarks);
+      this.currentSelectedChordId = detectedGesture.id;
+      chordName = detectedGesture.name;
 
-      // Audio Trigger Debounce
-      if (detectedGesture.id !== this.lastActiveGestureId) {
-        this.lastActiveGestureId = detectedGesture.id;
-        activeChord = this.soundEngine.playChord(detectedGesture.id);
-      } else {
-        activeChord = this.soundEngine.chordMap[detectedGesture.id] || null;
-      }
-    } else {
-      if (this.lastActiveGestureId !== null) {
-        this.lastActiveGestureId = null;
-        this.soundEngine.stopAll();
+      this.drawHandMesh(ctx, leftHandLandmarks, width, height, '#00f3ff');
+
+      // Right hand on camera = Pluck/Pinch Hand
+      if (hands.length > 1) {
+        const rightHandLandmarks = hands[1].landmarks;
+        this.drawHandMesh(ctx, rightHandLandmarks, width, height, '#ffb700');
+
+        // Distance between Thumb Tip (4) and Index Tip (8)
+        const thumbTip = rightHandLandmarks[4];
+        const indexTip = rightHandLandmarks[8];
+        const pinchDistance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+        // Pinch detection threshold (0.05) & cooldown (250ms)
+        if (pinchDistance < 0.05 && (now - this.lastPluckTime > 250)) {
+          this.soundEngine.strumChord(this.currentSelectedChordId);
+          this.lastPluckTime = now;
+          isPlucked = true;
+        }
       }
     }
 
     this.drawAudioWaveform(ctx, width, height);
     ctx.restore();
 
-    this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.8, handFound);
-    this.ui.setActiveGesture(detectedGesture, activeChord);
+    this.ui.updateMetrics(this.currentFps, results.multiHandedness?.[0]?.score || 0.8, handsCount);
+    this.ui.setActiveGesture(this.currentSelectedChordId, chordName, isPlucked);
   }
 
-  drawFastHandMesh(ctx, landmarks, width, height) {
-    ctx.fillStyle = '#ffb700';
-    for (let i = 0; i < landmarks.length; i += 2) {
+  drawHandMesh(ctx, landmarks, width, height, color) {
+    ctx.fillStyle = color;
+    for (let i = 0; i < landmarks.length; i += 3) {
       const x = landmarks[i].x * width;
       const y = landmarks[i].y * height;
       ctx.fillRect(x - 2, y - 2, 4, 4);
