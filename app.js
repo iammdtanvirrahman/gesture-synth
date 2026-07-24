@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Gesture Synth AI - Eric's Style Simple Auto Synth Controller
+ * Fast & Smooth Controller with Strict Hand Locking
  * ============================================================================
  */
 class UIController {
@@ -56,9 +56,9 @@ class App {
 
     this.hands.setOptions({
       maxNumHands: 2,
-      modelComplexity: 0,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      modelComplexity: 0, // ফাস্ট পারফর্ম্যান্সের জন্য ০
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6
     });
 
     this.hands.onResults((results) => this.onResults(results));
@@ -69,8 +69,9 @@ class App {
     if (this.isCameraRunning) return;
 
     try {
+      // ৩২০x২৪০ রেজোলিউশন ল্যাগ একদম দূর করে দেয়
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 },
+        video: { facingMode: 'user', width: 320, height: 240, frameRate: { max: 30 } },
         audio: false
       });
 
@@ -116,37 +117,40 @@ class App {
     const width = this.canvasElement.width;
     const height = this.canvasElement.height;
 
-    // 🪞 আয়নার মতো Mirror View
+    // 🪞 আয়নার মতো রেন্ডার
     ctx.save();
     ctx.scale(-1, 1);
     ctx.translate(-width, 0);
     ctx.drawImage(results.image, 0, 0, width, height);
 
+    let leftHand = null;
+    let rightHand = null;
+
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      // হাতগুলোকে স্ক্রিনের অবস্থান অনুযায়ী ফিল্টার (Left vs Right)
-      const hands = results.multiHandLandmarks.map(landmarks => {
-        const avgX = landmarks.reduce((sum, pt) => sum + pt.x, 0) / landmarks.length;
-        return { landmarks, screenX: 1 - avgX };
-      }).sort((a, b) => a.screenX - b.screenX);
+      // মিডিয়াপাইপের লেবেল অনুযায়ী বাম ও ডান হাত আলাদা করা
+      results.multiHandLandmarks.forEach((landmarks, index) => {
+        const label = results.multiHandedness[index]?.label;
+        // মিররড মোডে MediaPipe 'Left' = আপনার ডান হাত, 'Right' = আপনার বাম হাত
+        if (label === 'Right') {
+          leftHand = landmarks; // Physical Left Hand
+        } else {
+          rightHand = landmarks; // Physical Right Hand
+        }
+      });
 
-      const leftHand = hands[0]?.landmarks || null;
-      const rightHand = hands[1]?.landmarks || null;
+      // হাত আঁকা (বাম হাত = সায়ান, ডান হাত = কমলা)
+      if (leftHand) this.drawLandmarks(ctx, leftHand, width, height, '#00f3ff');
+      if (rightHand) this.drawLandmarks(ctx, rightHand, width, height, '#ff8800');
 
-      // লাল/কমলা পয়েন্ট পয়েন্টগুলো আঁকা (Eric-এর স্টাইলে)
-      if (leftHand) this.drawLandmarks(ctx, leftHand, width, height);
-      if (rightHand) this.drawLandmarks(ctx, rightHand, width, height);
-
-      // দুই হাতের ভঙ্গি মূল্যায়ন
       const chordInfo = this.gestureEngine.evaluateBothHands(leftHand, rightHand);
 
-      // কর্ড চেঞ্জ হলে অটো সাউন্ড প্লে হবে
       if (chordInfo.id !== this.lastChordId) {
         this.lastChordId = chordInfo.id;
         if (chordInfo.id === 'SILENT') {
           this.soundEngine.stopAll();
-          this.ui.updateTitle('Awaiting Gestures...');
+          this.ui.updateTitle('🖐 Show Left Hand for Root Note');
         } else {
-          this.soundEngine.playChord(chordInfo.notes);
+          this.soundEngine.playChord(chordInfo.id, chordInfo.notes);
           this.ui.updateTitle(chordInfo.displayName);
         }
       }
@@ -161,13 +165,13 @@ class App {
     ctx.restore();
   }
 
-  drawLandmarks(ctx, landmarks, width, height) {
-    ctx.fillStyle = '#ff4500';
+  drawLandmarks(ctx, landmarks, width, height, color) {
+    ctx.fillStyle = color;
     for (let i = 0; i < landmarks.length; i++) {
       const x = landmarks[i].x * width;
       const y = landmarks[i].y * height;
       ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
       ctx.fill();
     }
   }
