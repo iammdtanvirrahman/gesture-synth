@@ -1,35 +1,26 @@
 /**
  * ============================================================================
- * Simple Finger Count & Gesture Evaluator (Eric's Gesture Synth Style)
+ * Stabilized Gesture Engine (Distinct Left vs Right Hand Roles)
  * ============================================================================
  */
 class GestureEngine {
   constructor() {
-    this.rootNotes = {
-      1: { name: 'C', baseFreq: 'C4' },
-      2: { name: 'D', baseFreq: 'D4' },
-      3: { name: 'E', baseFreq: 'E4' },
-      4: { name: 'F', baseFreq: 'F4' },
-      5: { name: 'G / V', baseFreq: 'G3' }
-    };
+    this.history = [];
+    this.historySize = 3; // হাত কাঁপা এড়াতে স্ট্যাবিলাইজার buffer
   }
 
-  // আঙুল কতগুলো খোলা আছে তা গণনার ফাংশন
   countFingers(landmarks) {
     if (!landmarks || landmarks.length === 0) return 0;
 
     const wrist = landmarks[0];
-    const fingerTips = [8, 12, 16, 20]; // index, middle, ring, pinky
+    const fingerTips = [8, 12, 16, 20];
     let count = 0;
 
-    // ৪টি প্রধান আঙুল চেক
     fingerTips.forEach(tipIdx => {
-      const tip = landmarks[tipIdx];
-      const pip = landmarks[tipIdx - 2];
-      if (tip.y < pip.y) count++; // আঙুল ওপরের দিকে থাকলে
+      if (landmarks[tipIdx].y < landmarks[tipIdx - 2].y) count++;
     });
 
-    // বুড়ো আঙুল (Thumb) চেক
+    // Thumb check
     const thumbTip = landmarks[4];
     const thumbMcp = landmarks[2];
     if (Math.abs(thumbTip.x - wrist.x) > Math.abs(thumbMcp.x - wrist.x)) {
@@ -39,63 +30,63 @@ class GestureEngine {
     return count;
   }
 
-  evaluateBothHands(hand1Landmarks, hand2Landmarks) {
-    const hand1Fingers = this.countFingers(hand1Landmarks);
-    const hand2Fingers = this.countFingers(hand2Landmarks);
+  evaluateBothHands(leftHandLandmarks, rightHandLandmarks) {
+    const leftFingers = this.countFingers(leftHandLandmarks);
+    const rightFingers = this.countFingers(rightHandLandmarks);
 
-    // ডিফল্ট কর্ড
-    if (hand1Fingers === 0 && hand2Fingers === 0) {
-      return { id: 'SILENT', displayName: 'Awaiting Gestures...', notes: [] };
+    if (leftFingers === 0 && rightFingers === 0) {
+      return { id: 'SILENT', displayName: '🖐 Show Left Hand for Root Note', notes: [] };
     }
 
-    // বাম হাত = রুট নোট
-    const root = this.rootNotes[hand1Fingers] || { name: 'G', baseFreq: 'G3' };
+    // 🔴 1. BISTO LEFT HAND = Root Note Selector
+    const rootMap = { 1: 'C', 2: 'D', 3: 'E', 4: 'F', 5: 'G' };
+    const root = rootMap[leftFingers] || 'C';
 
-    // ডান হাত = কর্ড টাইপ (২ আঙুল V = Major -8ve, ৩ আঙুল = Minor, ইত্যাদি)
+    // 🔵 2. BISTO RIGHT HAND = Modifier Selector
     let modifierName = 'Major';
-    let notes = [root.baseFreq];
+    let type = 'major';
+    let octaveShift = 0;
 
-    if (hand2Fingers === 2) {
+    if (rightFingers === 2) {
       modifierName = 'Major (-8ve)';
-      // V shape -> Major Chord with low octave
-      notes = this.getChordNotes(root.name, 'major', -1);
-    } else if (hand2Fingers === 3) {
+      octaveShift = -1;
+    } else if (rightFingers === 3) {
       modifierName = 'Minor';
-      notes = this.getChordNotes(root.name, 'minor', 0);
-    } else if (hand2Fingers === 4) {
-      modifierName = '7th Chord';
-      notes = this.getChordNotes(root.name, '7th', 0);
-    } else {
-      modifierName = 'Major';
-      notes = this.getChordNotes(root.name, 'major', 0);
+      type = 'minor';
+    } else if (rightFingers === 4) {
+      modifierName = '7th';
+      type = '7th';
+    } else if (rightFingers === 5) {
+      modifierName = 'High (+8ve)';
+      octaveShift = 1;
     }
 
-    const displayName = `${root.name} ${modifierName}`;
-    const id = `${root.name}_${modifierName}`;
+    const notes = this.getChordNotes(root, type, octaveShift);
+    const displayName = `${root} ${modifierName}`;
+    const id = `${root}_${type}_${octaveShift}`;
 
     return { id, displayName, notes };
   }
 
-  getChordNotes(root, type, octaveShift = 0) {
-    const chords = {
+  getChordNotes(root, type, octaveShift) {
+    const baseChords = {
       'C': { major: ['C4', 'E4', 'G4'], minor: ['C4', 'Eb4', 'G4'], '7th': ['C4', 'E4', 'G4', 'Bb4'] },
       'D': { major: ['D4', 'F#4', 'A4'], minor: ['D4', 'F4', 'A4'], '7th': ['D4', 'F#4', 'A4', 'C5'] },
       'E': { major: ['E4', 'G#4', 'B4'], minor: ['E3', 'G3', 'B3'], '7th': ['E4', 'G#4', 'B4', 'D5'] },
       'F': { major: ['F3', 'A3', 'C4'], minor: ['F3', 'Ab3', 'C4'], '7th': ['F3', 'A3', 'C4', 'Eb4'] },
-      'G / V': { major: ['G3', 'B3', 'D4'], minor: ['G3', 'Bb3', 'D4'], '7th': ['G3', 'B3', 'D4', 'F4'] }
+      'G': { major: ['G3', 'B3', 'D4'], minor: ['G3', 'Bb3', 'D4'], '7th': ['G3', 'B3', 'D4', 'F4'] }
     };
 
-    let baseNotes = (chords[root] && chords[root][type]) ? chords[root][type] : ['C4', 'E4', 'G4'];
+    let notes = (baseChords[root] && baseChords[root][type]) ? [...baseChords[root][type]] : ['C4', 'E4', 'G4'];
 
-    if (octaveShift === -1) {
-      // অক্টেভ এক ধাপ নামিয়ে দেওয়া (-8ve)
-      baseNotes = baseNotes.map(note => {
-        const noteLetter = note.slice(0, -1);
-        const octave = parseInt(note.slice(-1)) - 1;
-        return `${noteLetter}${octave}`;
+    if (octaveShift !== 0) {
+      notes = notes.map(n => {
+        const letter = n.slice(0, -1);
+        const oct = parseInt(n.slice(-1)) + octaveShift;
+        return `${letter}${oct}`;
       });
     }
 
-    return baseNotes;
+    return notes;
   }
 }
