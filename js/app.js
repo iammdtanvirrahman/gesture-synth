@@ -1,6 +1,7 @@
 /* ==========================================================
    Gesture Synth AI
-   app.js
+   Application Controller
+   Part 1
 ========================================================== */
 
 import { createCamera } from "./core/camera.js";
@@ -25,169 +26,702 @@ export default class App {
 
     constructor() {
 
-        /* =========================
-            DOM
-        ========================= */
+        /* =====================================
+            STATE
+        ====================================== */
 
-        this.video = document.getElementById("video");
+        this.initialized = false;
+        this.running = false;
 
-        this.canvas = document.getElementById("canvas");
+        this.camera = null;
+        this.mediapipe = null;
+        this.synth = null;
+        this.loop = null;
 
-        this.volumeCanvas =
+        this.detector = null;
+        this.handTilt = null;
+        this.classifier = null;
 
-            document.getElementById("volumeCanvas");
+        this.landmarkRenderer = null;
+        this.energyRenderer = null;
+
+        this.hud = null;
+        this.volumeMeter = null;
+        this.helpModal = null;
+
+        this.bindDOM();
+        this.installEvents();
 
     }
 
-    async initialize() {
+    /* =====================================
+        DOM
+    ====================================== */
 
-        /* =========================
-            Camera
-        ========================= */
+    bindDOM() {
 
-        this.camera = await createCamera(
+        const pick = (...ids) => {
 
-            this.video
+            for (const id of ids) {
+
+                const element = document.getElementById(id);
+
+                if (element) return element;
+
+            }
+
+            return null;
+
+        };
+
+        /* ---------- Camera ---------- */
+
+        this.video = pick(
+
+            "video",
+            "webcam"
 
         );
 
-        /* =========================
-            MediaPipe
-        ========================= */
+        /* ---------- Canvas ---------- */
 
-        this.mediapipe =
+        this.canvas = pick(
 
-            new MediaPipeManager(
+            "canvas",
+            "overlay"
+
+        );
+
+        /* ---------- Volume ---------- */
+
+        this.volumeCanvas = pick(
+
+            "volumeCanvas",
+            "volumeMeter"
+
+        );
+
+        /* ---------- Landing ---------- */
+
+        this.startButton = pick(
+
+            "startExperience",
+            "startButton"
+
+        );
+
+        this.loadingScreen = pick(
+
+            "loadingScreen"
+
+        );
+
+        this.loadingText = pick(
+
+            "loadingText"
+
+        );
+
+        this.loadingBar = pick(
+
+            "loadingBar"
+
+        );
+
+        this.stage = pick(
+
+            "mainStage",
+            "stage"
+
+        );
+
+        if (!this.video)
+            console.warn("Video element not found.");
+
+        if (!this.canvas)
+            console.warn("Canvas element not found.");
+
+    }
+
+    /* =====================================
+        EVENTS
+    ====================================== */
+
+    installEvents() {
+
+        window.addEventListener(
+
+            "resize",
+
+            () => this.resize()
+
+        );
+
+        document.addEventListener(
+
+            "visibilitychange",
+
+            () => {
+
+                if (!this.synth) return;
+
+                if (document.hidden) {
+
+                    this.synth.suspend?.();
+
+                }
+
+                else {
+
+                    this.synth.resume?.();
+
+                }
+
+            }
+
+        );
+
+    }
+
+    /* =====================================
+        Loading
+    ====================================== */
+
+    setLoading(percent, text) {
+
+        if (this.loadingBar) {
+
+            this.loadingBar.style.width =
+
+                percent + "%";
+
+        }
+
+        if (this.loadingText) {
+
+            this.loadingText.textContent = text;
+
+        }
+
+    }
+
+    /* =====================================
+        Resize
+    ====================================== */
+
+    resize() {
+
+        if (!this.canvas) return;
+
+        this.canvas.width =
+
+            this.canvas.clientWidth;
+
+        this.canvas.height =
+
+            this.canvas.clientHeight;
+
+    }
+    /* =====================================
+        INITIALIZE
+    ====================================== */
+
+    async initialize() {
+
+        if (this.initialized) {
+
+            console.warn("App already initialized.");
+
+            return;
+
+        }
+
+        try {
+
+            /* ---------- STEP 1 ---------- */
+
+            this.setLoading(
+
+                5,
+
+                "Preparing application..."
+
+            );
+
+            this.resize();
+
+            /* ---------- STEP 2 ---------- */
+
+            this.setLoading(
+
+                15,
+
+                "Starting camera..."
+
+            );
+
+            this.camera = await createCamera(
 
                 this.video
 
             );
 
-        await this.mediapipe.initialize();
+            /* ---------- STEP 3 ---------- */
 
-        /* =========================
-            Gesture
-        ========================= */
+            this.setLoading(
 
-        this.detector =
+                30,
 
-            new FingerDetector();
-
-        this.handTilt =
-
-            new HandTilt();
-
-        this.classifier =
-
-            new ChordClassifier();
-
-        /* =========================
-            Audio
-        ========================= */
-
-        this.synth =
-
-            new SynthEngine();
-
-        await this.synth.initialize();
-
-        /* =========================
-            Graphics
-        ========================= */
-
-        this.landmark =
-
-            new LandmarkRenderer(
-
-                this.canvas
+                "Loading MediaPipe..."
 
             );
 
-        this.energy =
+            this.mediapipe =
 
-            new EnergyRenderer(
+                new MediaPipeManager(
 
-                this.canvas
+                    this.video
 
-            );
+                );
 
-        /* =========================
-            UI
-        ========================= */
+            await this.mediapipe.initialize();
 
-        this.hud =
+            /* ---------- STEP 4 ---------- */
 
-            new HUD();
+            this.setLoading(
 
-        this.volume =
+                45,
 
-            new VolumeMeter(
-
-                this.volumeCanvas
+                "Loading gesture engine..."
 
             );
 
-        this.help =
+            this.detector =
 
-            new HelpModal();
+                new FingerDetector();
 
-        /* =========================
-            Animation Loop
-        ========================= */
+            this.handTilt =
 
-        this.loop =
+                new HandTilt();
 
-            new AnimationLoop({
+            this.classifier =
 
-                mediapipe:this.mediapipe,
+                new ChordClassifier();
 
-                fingerDetector:this.detector,
+            /* ---------- STEP 5 ---------- */
 
-                handTilt:this.handTilt,
+            this.setLoading(
 
-                chordClassifier:this.classifier,
+                60,
 
-                synth:this.synth,
+                "Loading synthesizer..."
 
-                landmarkRenderer:this.landmark,
+            );
 
-                energyRenderer:this.energy,
+            this.synth =
 
-                hud:this.hud,
+                new SynthEngine();
 
-                volumeMeter:this.volume
+            await this.synth.initialize();
 
-            });
+            /* ---------- STEP 6 ---------- */
 
-        this.mediapipe.onResults(results=>{
+            this.setLoading(
 
-            this.loop.onResults(results);
+                75,
 
-        });
+                "Preparing graphics..."
 
-        this.loop.start();
+            );
 
-        console.log(
+            this.landmarkRenderer =
 
-            "✅ Gesture Synth AI Ready"
+                new LandmarkRenderer(
 
-        );
+                    this.canvas
+
+                );
+
+            this.energyRenderer =
+
+                new EnergyRenderer(
+
+                    this.canvas
+
+                );
+
+            /* ---------- STEP 7 ---------- */
+
+            this.setLoading(
+
+                85,
+
+                "Preparing interface..."
+
+            );
+
+            this.hud =
+
+                new HUD();
+
+            this.volumeMeter =
+
+                new VolumeMeter(
+
+                    this.volumeCanvas
+
+                );
+
+            this.helpModal =
+
+                new HelpModal();
+
+            /* ---------- STEP 8 ---------- */
+
+            this.setLoading(
+
+                95,
+
+                "Building animation loop..."
+
+            );
+
+            this.loop =
+
+                new AnimationLoop({
+
+                    mediapipe:
+
+                        this.mediapipe,
+
+                    fingerDetector:
+
+                        this.detector,
+
+                    handTilt:
+
+                        this.handTilt,
+
+                    chordClassifier:
+
+                        this.classifier,
+
+                    synth:
+
+                        this.synth,
+
+                    landmarkRenderer:
+
+                        this.landmarkRenderer,
+
+                    energyRenderer:
+
+                        this.energyRenderer,
+
+                    hud:
+
+                        this.hud,
+
+                    volumeMeter:
+
+                        this.volumeMeter
+
+                });
+
+            /* ---------- STEP 9 ---------- */
+
+            this.mediapipe.onResults(
+
+                results => {
+
+                    this.loop.onResults(
+
+                        results
+
+                    );
+
+                }
+
+            );
+
+            this.setLoading(
+
+                100,
+
+                "Ready."
+
+            );
+
+            this.initialized = true;
+
+            console.log(
+
+                "✅ Initialization Complete"
+
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+
+                "Initialization Failed",
+
+                error
+
+            );
+
+            throw error;
+
+        }
+
+    }
+    /* =====================================
+        START APPLICATION
+    ====================================== */
+
+    async start() {
+
+        if (!this.initialized) {
+
+            await this.initialize();
+
+        }
+
+        if (this.running) {
+
+            return;
+
+        }
+
+        try {
+
+            /* ---------- Resume Audio ---------- */
+
+            if (this.synth?.resume) {
+
+                await this.synth.resume();
+
+            }
+
+            /* ---------- Start Loop ---------- */
+
+            this.loop?.start();
+
+            this.running = true;
+
+            /* ---------- Hide Loading ---------- */
+
+            if (this.loadingScreen) {
+
+                this.loadingScreen.classList.add("hidden");
+
+            }
+
+            /* ---------- Show Main Stage ---------- */
+
+            if (this.stage) {
+
+                this.stage.classList.remove("hidden");
+
+            }
+
+            console.log("🚀 Gesture Synth Started");
+
+        }
+
+        catch (error) {
+
+            console.error(
+
+                "Failed to start application",
+
+                error
+
+            );
+
+            throw error;
+
+        }
 
     }
 
-    /* =========================
-        Destroy
-    ========================= */
+    /* =====================================
+        STOP
+    ====================================== */
 
-    destroy(){
+    stop() {
 
-        this.loop.stop();
+        if (!this.running) {
 
-        this.camera.stop();
+            return;
 
-        this.mediapipe.stop();
+        }
 
-        this.synth.destroy();
+        this.loop?.stop();
+
+        this.synth?.suspend?.();
+
+        this.running = false;
+
+        console.log("⏸ Application Paused");
+
+    }
+
+    /* =====================================
+        RESUME
+    ====================================== */
+
+    async resume() {
+
+        if (!this.initialized) {
+
+            return;
+
+        }
+
+        if (this.running) {
+
+            return;
+
+        }
+
+        await this.synth?.resume?.();
+
+        this.loop?.start();
+
+        this.running = true;
+
+    }
+
+    /* =====================================
+        RESET
+    ====================================== */
+
+    reset() {
+
+        this.loop?.reset?.();
+
+        this.volumeMeter?.reset?.();
+
+        this.hud?.reset?.();
+
+    }
+
+    /* =====================================
+        STATUS
+    ====================================== */
+
+    isRunning() {
+
+        return this.running;
+
+    }
+
+    isInitialized() {
+
+        return this.initialized;
+
+    }
+
+    getCamera() {
+
+        return this.camera;
+
+    }
+
+    getMediaPipe() {
+
+        return this.mediapipe;
+
+    }
+
+    getSynth() {
+
+        return this.synth;
+
+    }
+
+    getLoop() {
+
+        return this.loop;
+
+    }
+    /* =====================================
+        DESTROY
+    ====================================== */
+
+    destroy() {
+
+        console.log("🛑 Destroying application...");
+
+        try {
+
+            /* ---------- Stop Animation ---------- */
+
+            this.loop?.stop();
+
+            /* ---------- Stop Camera ---------- */
+
+            this.camera?.stop?.();
+
+            /* ---------- Stop MediaPipe ---------- */
+
+            this.mediapipe?.stop?.();
+
+            this.mediapipe?.destroy?.();
+
+            /* ---------- Stop Audio ---------- */
+
+            this.synth?.destroy?.();
+
+            /* ---------- Reset UI ---------- */
+
+            this.volumeMeter?.reset?.();
+
+            this.hud?.reset?.();
+
+            /* ---------- Close Modal ---------- */
+
+            this.helpModal?.close?.();
+
+            /* ---------- Clear References ---------- */
+
+            this.loop = null;
+            this.camera = null;
+            this.mediapipe = null;
+            this.synth = null;
+
+            this.detector = null;
+            this.handTilt = null;
+            this.classifier = null;
+
+            this.landmarkRenderer = null;
+            this.energyRenderer = null;
+
+            this.volumeMeter = null;
+            this.hud = null;
+            this.helpModal = null;
+
+            this.initialized = false;
+            this.running = false;
+
+            console.log("✅ Application Destroyed");
+
+        }
+
+        catch (error) {
+
+            console.error(
+
+                "Destroy Error",
+
+                error
+
+            );
+
+        }
 
     }
 
