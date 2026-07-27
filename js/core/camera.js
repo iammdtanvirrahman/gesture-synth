@@ -9,45 +9,99 @@ export class CameraManager {
 
     constructor(videoElement) {
 
+        if (!videoElement) {
+
+            throw new Error("CameraManager: video element not found.");
+
+        }
+
         this.video = videoElement;
-
         this.stream = null;
-
         this.ready = false;
+        this.starting = false;
 
     }
 
+    /* =====================================
+        Start Camera
+    ====================================== */
+
     async start() {
+
+        if (this.ready) {
+
+            return this.video;
+
+        }
+
+        if (this.starting) {
+
+            return this.video;
+
+        }
+
+        this.starting = true;
 
         try {
 
-            this.stream = await navigator.mediaDevices.getUserMedia({
+            if (
+                !navigator.mediaDevices ||
+                !navigator.mediaDevices.getUserMedia
+            ) {
 
-                video: {
+                throw new Error(
+                    "getUserMedia is not supported."
+                );
 
-                    facingMode: APP_CONFIG.CAMERA.facingMode,
+            }
 
-                    width: {
+            this.stream =
+                await navigator.mediaDevices.getUserMedia({
 
-                        ideal: APP_CONFIG.CAMERA.width
+                    video: {
+
+                        facingMode:
+                            APP_CONFIG.CAMERA.facingMode,
+
+                        width: {
+
+                            ideal:
+                                APP_CONFIG.CAMERA.width
+
+                        },
+
+                        height: {
+
+                            ideal:
+                                APP_CONFIG.CAMERA.height
+
+                        }
 
                     },
 
-                    height: {
+                    audio: false
 
-                        ideal: APP_CONFIG.CAMERA.height
-
-                    }
-
-                },
-
-                audio: false
-
-            });
+                });
 
             this.video.srcObject = this.stream;
 
             await this.video.play();
+
+            await new Promise(resolve => {
+
+                if (this.video.readyState >= 2) {
+
+                    resolve();
+
+                }
+
+                else {
+
+                    this.video.onloadedmetadata = () => resolve();
+
+                }
+
+            });
 
             this.ready = true;
 
@@ -57,33 +111,56 @@ export class CameraManager {
 
         }
 
-        catch(error){
+        catch (error) {
 
-            console.error("Camera Error :",error);
+            console.error("Camera Error:", error);
+
+            this.stop();
 
             throw error;
 
         }
 
-    }
+        finally {
 
-    stop(){
+            this.starting = false;
 
-        if(!this.stream) return;
-
-        this.stream.getTracks().forEach(track=>{
-
-            track.stop();
-
-        });
-
-        this.stream=null;
-
-        this.ready=false;
+        }
 
     }
 
-    async restart(){
+    /* =====================================
+        Stop Camera
+    ====================================== */
+
+    stop() {
+
+        if (this.stream) {
+
+            this.stream
+                .getTracks()
+                .forEach(track => track.stop());
+
+        }
+
+        if (this.video) {
+
+            this.video.pause();
+
+            this.video.srcObject = null;
+
+        }
+
+        this.stream = null;
+        this.ready = false;
+
+    }
+
+    /* =====================================
+        Restart
+    ====================================== */
+
+    async restart() {
 
         this.stop();
 
@@ -91,13 +168,23 @@ export class CameraManager {
 
     }
 
-    getVideo(){
+    /* =====================================
+        Getters
+    ====================================== */
+
+    getVideo() {
 
         return this.video;
 
     }
 
-    isReady(){
+    getStream() {
+
+        return this.stream;
+
+    }
+
+    isReady() {
 
         return this.ready;
 
@@ -109,9 +196,9 @@ export class CameraManager {
     Helper
 ========================================================== */
 
-export async function createCamera(videoElement){
+export async function createCamera(videoElement) {
 
-    const camera=new CameraManager(videoElement);
+    const camera = new CameraManager(videoElement);
 
     await camera.start();
 
