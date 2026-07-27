@@ -7,27 +7,37 @@ export default class EnergyRenderer {
 
     constructor(canvas) {
 
+        if (!canvas) {
+
+            throw new Error(
+                "EnergyRenderer: Canvas not found."
+            );
+
+        }
+
         this.canvas = canvas;
 
         this.ctx = canvas.getContext("2d");
-
-        this.particles = [];
-
-        this.maxParticles = 120;
 
         this.energy = 0;
 
         this.color = "#00F3FF";
 
+        this.maxParticles = 120;
+
+        this.particles = [];
+
         this.createParticles();
 
     }
 
-    /* ======================================
+    /* =====================================
         Create Particles
-    ====================================== */
+    ===================================== */
 
     createParticles() {
+
+        this.particles.length = 0;
 
         for (let i = 0; i < this.maxParticles; i++) {
 
@@ -43,7 +53,7 @@ export default class EnergyRenderer {
 
                 size: 2 + Math.random() * 4,
 
-                alpha: Math.random()
+                alpha: 0.2 + Math.random() * 0.8
 
             });
 
@@ -51,19 +61,55 @@ export default class EnergyRenderer {
 
     }
 
-    /* ======================================
-        Update Energy
-    ====================================== */
+    /* =====================================
+        Resize
+    ===================================== */
 
-    update(level = 0) {
+    resize() {
 
-        this.energy = level;
+        this.createParticles();
 
     }
 
-    /* ======================================
-        Draw Background Glow
-    ====================================== */
+    /* =====================================
+        Update
+    ===================================== */
+
+    update(level = 0) {
+
+        this.energy = Math.max(
+
+            0,
+
+            Math.min(1, level)
+
+        );
+
+    }
+
+    /* =====================================
+        Clear
+    ===================================== */
+
+    clear() {
+
+        this.ctx.clearRect(
+
+            0,
+
+            0,
+
+            this.canvas.width,
+
+            this.canvas.height
+
+        );
+
+    }
+
+    /* =====================================
+        Background Glow
+    ===================================== */
 
     drawGlow() {
 
@@ -103,17 +149,27 @@ export default class EnergyRenderer {
 
     }
 
-    /* ======================================
-        Draw Particles
-    ====================================== */
+    /* =====================================
+        Particles
+    ===================================== */
 
     drawParticles() {
 
-        this.particles.forEach(p => {
+        const ctx = this.ctx;
 
-            p.x += p.vx * (1 + this.energy * 4);
+        ctx.shadowBlur = 20;
 
-            p.y += p.vy * (1 + this.energy * 4);
+        ctx.shadowColor = this.color;
+
+        for (const p of this.particles) {
+
+            const speed =
+
+                1 + this.energy * 4;
+
+            p.x += p.vx * speed;
+
+            p.y += p.vy * speed;
 
             if (p.x < 0) p.x = this.canvas.width;
             if (p.x > this.canvas.width) p.x = 0;
@@ -121,9 +177,9 @@ export default class EnergyRenderer {
             if (p.y < 0) p.y = this.canvas.height;
             if (p.y > this.canvas.height) p.y = 0;
 
-            this.ctx.beginPath();
+            ctx.beginPath();
 
-            this.ctx.arc(
+            ctx.arc(
 
                 p.x,
 
@@ -137,41 +193,45 @@ export default class EnergyRenderer {
 
             );
 
-            this.ctx.fillStyle = `rgba(0,243,255,${p.alpha})`;
+            ctx.fillStyle =
 
-            this.ctx.shadowBlur = 20;
+                `rgba(0,243,255,${p.alpha})`;
 
-            this.ctx.shadowColor = this.color;
+            ctx.fill();
 
-            this.ctx.fill();
-
-        });
+        }
 
     }
 
-    /* ======================================
+    /* =====================================
         Ripple
-    ====================================== */
+    ===================================== */
 
     ripple() {
 
-        const r =
+        const ctx = this.ctx;
+
+        const radius =
 
             80 +
 
-            Math.sin(Date.now() / 150) * 20 +
+            Math.sin(
+
+                performance.now() * 0.006
+
+            ) * 20 +
 
             this.energy * 60;
 
-        this.ctx.beginPath();
+        ctx.beginPath();
 
-        this.ctx.arc(
+        ctx.arc(
 
             this.canvas.width / 2,
 
             this.canvas.height / 2,
 
-            r,
+            radius,
 
             0,
 
@@ -179,27 +239,41 @@ export default class EnergyRenderer {
 
         );
 
-        this.ctx.strokeStyle =
+        ctx.strokeStyle =
 
             "rgba(0,243,255,.25)";
 
-        this.ctx.lineWidth = 2;
+        ctx.lineWidth = 2;
 
-        this.ctx.stroke();
+        ctx.stroke();
 
     }
 
-    /* ======================================
+    /* =====================================
         Render
-    ====================================== */
+    ===================================== */
 
     render() {
+
+        this.clear();
 
         this.drawGlow();
 
         this.drawParticles();
 
         this.ripple();
+
+    }
+
+    /* =====================================
+        Reset
+    ===================================== */
+
+    reset() {
+
+        this.energy = 0;
+
+        this.clear();
 
     }
 
