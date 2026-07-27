@@ -1,0 +1,281 @@
+/* ==========================================================
+   Gesture Synth AI
+   responsive.css
+========================================================== */
+
+/* ==========================================================
+   Large Tablet
+========================================================== */
+
+@media (max-width:1200px){
+
+    .controls-overlay{
+
+        flex-wrap:wrap;
+
+        gap:12px;
+
+    }
+
+    #statusCard{
+
+        width:230px;
+
+    }
+
+}
+
+/* ==========================================================
+   Tablet
+========================================================== */
+
+@media (max-width:992px){
+
+    .hud-top-left{
+
+        left:14px;
+        top:14px;
+        gap:10px;
+
+    }
+
+    .hud-metric{
+
+        min-width:95px;
+
+        padding:10px;
+
+    }
+
+    #statusCard{
+
+        left:14px;
+        bottom:14px;
+
+        width:210px;
+
+    }
+
+    .controls-overlay{
+
+        right:14px;
+        top:14px;
+
+    }
+
+    .control-group select{
+
+        min-width:170px;
+
+    }
+
+}
+
+/* ==========================================================
+   Mobile
+========================================================== */
+
+@media (max-width:768px){
+
+    body{
+
+        font-size:15px;
+
+    }
+
+    .hud-top-left{
+
+        flex-wrap:wrap;
+
+        width:calc(100% - 28px);
+
+    }
+
+    .hud-metric{
+
+        flex:1;
+
+        min-width:90px;
+
+    }
+
+    .controls-overlay{
+
+        position:absolute;
+
+        top:auto;
+
+        bottom:100px;
+
+        right:12px;
+
+        flex-direction:column;
+
+        align-items:flex-end;
+
+    }
+
+    .control-group{
+
+        width:180px;
+
+    }
+
+    .control-group select{
+
+        width:100%;
+
+        min-width:auto;
+
+    }
+
+    #statusCard{
+
+        display:none;
+
+    }
+
+    #chordDisplay{
+
+        font-size:3rem;
+
+    }
+
+    #qualityDisplay{
+
+        font-size:.82rem;
+
+        text-align:center;
+
+    }
+
+    #githubFooter{
+
+        bottom:8px;
+
+        font-size:.72rem;
+
+    }
+
+}
+
+/* ==========================================================
+   Small Mobile
+========================================================== */
+
+@media (max-width:576px){
+
+    .landing-content h1{
+
+        font-size:2.4rem;
+
+    }
+
+    .landing-content p{
+
+        font-size:.95rem;
+
+    }
+
+    #startExperience{
+
+        width:100%;
+
+    }
+
+    .landing-features{
+
+        gap:8px;
+
+    }
+
+    .landing-features span{
+
+        font-size:.72rem;
+
+        padding:8px 12px;
+
+    }
+
+    #helpButton,
+    #fullscreenButton,
+    #captureButton,
+    #settingsButton{
+
+        width:48px;
+
+        height:48px;
+
+        font-size:1rem;
+
+    }
+
+    #helpButton{
+
+        bottom:220px;
+
+    }
+
+    #fullscreenButton{
+
+        bottom:164px;
+
+    }
+
+    #captureButton{
+
+        bottom:108px;
+
+    }
+
+    #settingsButton{
+
+        bottom:52px;
+
+    }
+
+}
+
+/* ==========================================================
+   Landscape Mobile
+========================================================== */
+
+@media (max-height:600px){
+
+    #githubFooter{
+
+        display:none;
+
+    }
+
+    .hud-bottom-center{
+
+        bottom:18px;
+
+    }
+
+    #statusCard{
+
+        display:none;
+
+    }
+
+}
+
+/* ==========================================================
+   Safe Area (iPhone etc.)
+========================================================== */
+
+@supports (padding:max(0px)){
+
+    body{
+
+        padding-left:max(0px,env(safe-area-inset-left));
+
+        padding-right:max(0px,env(safe-area-inset-right));
+
+        padding-bottom:max(0px,env(safe-area-inset-bottom));
+
+    }
+
+}
