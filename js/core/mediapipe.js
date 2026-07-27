@@ -5,105 +5,215 @@
 
 import APP_CONFIG from "../config.js";
 
-export class MediaPipeManager{
+export class MediaPipeManager {
 
-    constructor(video){
+    constructor(video) {
 
-        this.video=video;
+        if (!video) {
 
-        this.hands=null;
+            throw new Error("MediaPipeManager: video element not found.");
 
-        this.onResultsCallback=null;
+        }
 
-        this.ready=false;
+        this.video = video;
 
-    }
+        this.hands = null;
 
-    async initialize(){
+        this.camera = null;
 
-        this.hands=new Hands({
+        this.onResultsCallback = null;
 
-            locateFile:(file)=>{
+        this.ready = false;
 
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-
-            }
-
-        });
-
-        this.hands.setOptions({
-
-            maxNumHands:APP_CONFIG.MAX_HANDS,
-
-            modelComplexity:1,
-
-            minDetectionConfidence:
-                APP_CONFIG.DETECTION.minHandDetectionConfidence,
-
-            minTrackingConfidence:
-                APP_CONFIG.DETECTION.minTrackingConfidence
-
-        });
-
-        this.hands.onResults((results)=>{
-
-            if(this.onResultsCallback){
-
-                this.onResultsCallback(results);
-
-            }
-
-        });
-
-        this.camera=new Camera(
-
-            this.video,
-
-            {
-
-                onFrame:async()=>{
-
-                    await this.hands.send({
-
-                        image:this.video
-
-                    });
-
-                },
-
-                width:APP_CONFIG.CAMERA.width,
-
-                height:APP_CONFIG.CAMERA.height
-
-            }
-
-        );
-
-        await this.camera.start();
-
-        this.ready=true;
-
-        console.log("✅ MediaPipe Ready");
+        this.initializing = false;
 
     }
 
-    onResults(callback){
+    /* =====================================
+        Initialize
+    ====================================== */
 
-        this.onResultsCallback=callback;
+    async initialize() {
 
-    }
+        if (this.ready) return;
 
-    stop(){
+        if (this.initializing) return;
 
-        if(this.camera){
+        this.initializing = true;
 
-            this.camera.stop();
+        try {
+
+            if (typeof Hands === "undefined") {
+
+                throw new Error(
+                    "MediaPipe Hands library not loaded."
+                );
+
+            }
+
+            if (typeof Camera === "undefined") {
+
+                throw new Error(
+                    "MediaPipe Camera Utils not loaded."
+                );
+
+            }
+
+            this.hands = new Hands({
+
+                locateFile: (file) =>
+
+                    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+
+            });
+
+            this.hands.setOptions({
+
+                maxNumHands: APP_CONFIG.MAX_HANDS,
+
+                modelComplexity: 1,
+
+                minDetectionConfidence:
+                    APP_CONFIG.DETECTION.minHandDetectionConfidence,
+
+                minTrackingConfidence:
+                    APP_CONFIG.DETECTION.minTrackingConfidence
+
+            });
+
+            this.hands.onResults((results) => {
+
+                if (this.onResultsCallback) {
+
+                    this.onResultsCallback(results);
+
+                }
+
+            });
+
+            this.camera = new Camera(
+
+                this.video,
+
+                {
+
+                    onFrame: async () => {
+
+                        if (!this.hands) return;
+
+                        await this.hands.send({
+
+                            image: this.video
+
+                        });
+
+                    },
+
+                    width: APP_CONFIG.CAMERA.width,
+
+                    height: APP_CONFIG.CAMERA.height
+
+                }
+
+            );
+
+            await this.camera.start();
+
+            this.ready = true;
+
+            console.log("✅ MediaPipe Ready");
+
+        }
+
+        catch (error) {
+
+            console.error(
+
+                "MediaPipe Error:",
+
+                error
+
+            );
+
+            this.stop();
+
+            throw error;
+
+        }
+
+        finally {
+
+            this.initializing = false;
 
         }
 
     }
 
-    isReady(){
+    /* =====================================
+        Results
+    ====================================== */
+
+    onResults(callback) {
+
+        this.onResultsCallback = callback;
+
+    }
+
+    /* =====================================
+        Restart
+    ====================================== */
+
+    async restart() {
+
+        this.stop();
+
+        await this.initialize();
+
+    }
+
+    /* =====================================
+        Stop
+    ====================================== */
+
+    stop() {
+
+        try {
+
+            this.camera?.stop?.();
+
+        }
+
+        catch (e) {
+
+            console.warn(e);
+
+        }
+
+        try {
+
+            this.hands?.close?.();
+
+        }
+
+        catch (e) {
+
+            console.warn(e);
+
+        }
+
+        this.camera = null;
+
+        this.hands = null;
+
+        this.ready = false;
+
+    }
+
+    /* =====================================
+        Getter
+    ====================================== */
+
+    isReady() {
 
         return this.ready;
 
