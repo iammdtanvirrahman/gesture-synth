@@ -11,7 +11,6 @@ const ctx = canvasEl.getContext("2d");
 const chordDisplayEl = document.getElementById("chordDisplay");
 const qualityDisplayEl = document.getElementById("qualityDisplay");
 const volumeBarEls = Array.from(document.querySelectorAll(".vol-bar"));
-const startOverlayEl = document.getElementById("startOverlay");
 const fpsEl = document.getElementById("val-fps");
 const handsEl = document.getElementById("val-hands");
 const filterEl = document.getElementById("distortionDisplay");
@@ -168,7 +167,12 @@ class SynthEngine {
   }
 
   ensureContext() {
-    if (this.ctx) return;
+    if (this.ctx) {
+      if (this.ctx.state === "suspended") {
+        this.ctx.resume();
+      }
+      return;
+    }
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 
     this.filter = this.ctx.createBiquadFilter();
@@ -227,6 +231,17 @@ class SynthEngine {
 }
 
 const synth = new SynthEngine();
+
+// ---- Quiet Auto-Unlock Audio on Any Screen Touch/Click ----
+const handleUserInteraction = () => {
+  synth.ensureContext();
+  window.removeEventListener("click", handleUserInteraction);
+  window.removeEventListener("touchstart", handleUserInteraction);
+  window.removeEventListener("keydown", handleUserInteraction);
+};
+window.addEventListener("click", handleUserInteraction);
+window.addEventListener("touchstart", handleUserInteraction);
+window.addEventListener("keydown", handleUserInteraction);
 
 // ---- Music Math Helpers ----
 const DEGREE_SEMITONES = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: -1 };
@@ -351,12 +366,6 @@ function updateVolumeMeter(volume01) {
 }
 
 // Event Listeners
-startOverlayEl.addEventListener("click", () => {
-  synth.ensureContext();
-  startOverlayEl.style.display = "none";
-  canvasEl.classList.remove("dimmed");
-});
-
 helpButton.addEventListener("click", () => helpModal.classList.remove("hidden"));
 closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
 
