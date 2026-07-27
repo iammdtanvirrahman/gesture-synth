@@ -4,18 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gesture Synth AI - Air Guitar Engine</title>
-  
+
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  
+
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <div id="stage">
     <video id="webcam" autoplay playsinline muted></video>
-    <canvas id="overlay" class="dimmed"></canvas>
+    <canvas id="overlay"></canvas>
 
     <!-- Top Left HUD Metrics -->
     <div class="hud-top-left">
@@ -103,12 +103,6 @@
         <p><b>Height:</b> Higher → Louder | Lower → Softer</p>
         <p><b>Tilt:</b> Inward → Warm Filter | Outward → Squelch Filter Sweep</p>
       </div>
-    </div>
-
-    <!-- Audio Enable Overlay -->
-    <div id="startOverlay">
-      <div class="start-circle">▶</div>
-      <div class="start-text">CLICK TO START GESTURE SYNTH</div>
     </div>
   </div>
 
