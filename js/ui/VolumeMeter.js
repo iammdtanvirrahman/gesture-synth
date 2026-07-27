@@ -7,79 +7,81 @@ export default class VolumeMeter {
 
     constructor(canvas) {
 
-        this.canvas = canvas;
+        if (!canvas) {
 
+            throw new Error("VolumeMeter: Canvas not found.");
+
+        }
+
+        this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
 
         this.level = 0;
-
         this.target = 0;
 
         this.bars = 32;
-
-        this.maxHeight = canvas.height - 10;
-
         this.barGap = 4;
 
-        this.barWidth =
-
-            (canvas.width - this.barGap * this.bars)
-
-            / this.bars;
+        this.resize();
 
         this.gradient = this.ctx.createLinearGradient(
-
             0,
-            canvas.height,
+            this.canvas.height,
             0,
             0
-
         );
 
         this.gradient.addColorStop(0, "#00F3FF");
-        this.gradient.addColorStop(.5, "#19FFD5");
+        this.gradient.addColorStop(0.5, "#19FFD5");
         this.gradient.addColorStop(1, "#FFFFFF");
 
     }
 
     /* =====================================
-        Set Volume
+        Resize
+    ===================================== */
+
+    resize() {
+
+        this.maxHeight = this.canvas.height - 10;
+
+        this.barWidth =
+
+            (this.canvas.width -
+
+                this.barGap * (this.bars - 1))
+
+            / this.bars;
+
+    }
+
+    /* =====================================
+        Update
     ===================================== */
 
     update(level) {
 
         this.target = Math.max(
-
             0,
-
-            Math.min(
-
-                1,
-
-                level
-
-            )
-
+            Math.min(1, level)
         );
 
     }
 
     /* =====================================
-        Smooth Animation
+        Animation
     ===================================== */
 
     animate() {
 
         this.level +=
 
-            (this.target - this.level)
-
-            * .15;
+            (this.target - this.level) * 0.15;
 
     }
 
     /* =====================================
-        Background
+        Clear
     ===================================== */
 
     clear() {
@@ -87,7 +89,6 @@ export default class VolumeMeter {
         this.ctx.clearRect(
 
             0,
-
             0,
 
             this.canvas.width,
@@ -104,29 +105,34 @@ export default class VolumeMeter {
 
     drawBars() {
 
-        this.ctx.fillStyle = this.gradient;
+        const ctx = this.ctx;
 
-        for (
+        ctx.fillStyle = this.gradient;
 
-            let i = 0;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "#00F3FF";
 
-            i < this.bars;
+        for (let i = 0; i < this.bars; i++) {
 
-            i++
+            const variation =
 
-        ) {
+                0.85 +
 
-            const noise =
+                0.15 *
 
-                Math.random() * .2;
+                Math.sin(
+
+                    performance.now() * 0.01 + i
+
+                );
 
             const h =
 
-                (this.level + noise)
+                this.level *
 
-                * this.maxHeight
+                variation *
 
-                * Math.random();
+                this.maxHeight;
 
             const x =
 
@@ -138,11 +144,7 @@ export default class VolumeMeter {
 
                 this.canvas.height - h;
 
-            this.ctx.shadowBlur = 12;
-
-            this.ctx.shadowColor = "#00F3FF";
-
-            this.ctx.fillRect(
+            ctx.fillRect(
 
                 x,
 
@@ -164,6 +166,8 @@ export default class VolumeMeter {
 
     drawPeak() {
 
+        const ctx = this.ctx;
+
         const y =
 
             this.canvas.height -
@@ -172,17 +176,11 @@ export default class VolumeMeter {
 
             this.maxHeight;
 
-        this.ctx.beginPath();
+        ctx.beginPath();
 
-        this.ctx.moveTo(
+        ctx.moveTo(0, y);
 
-            0,
-
-            y
-
-        );
-
-        this.ctx.lineTo(
+        ctx.lineTo(
 
             this.canvas.width,
 
@@ -190,13 +188,13 @@ export default class VolumeMeter {
 
         );
 
-        this.ctx.strokeStyle =
+        ctx.strokeStyle =
 
             "rgba(255,255,255,.35)";
 
-        this.ctx.lineWidth = 2;
+        ctx.lineWidth = 2;
 
-        this.ctx.stroke();
+        ctx.stroke();
 
     }
 
@@ -213,6 +211,20 @@ export default class VolumeMeter {
         this.drawBars();
 
         this.drawPeak();
+
+    }
+
+    /* =====================================
+        Reset
+    ===================================== */
+
+    reset() {
+
+        this.level = 0;
+
+        this.target = 0;
+
+        this.clear();
 
     }
 
