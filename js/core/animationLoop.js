@@ -53,6 +53,8 @@ export default class AnimationLoop {
 
         this.delta = 0;
 
+        this.fps = 0;
+
     }
 
     /* =====================================
@@ -64,6 +66,8 @@ export default class AnimationLoop {
         if (this.running) return;
 
         this.running = true;
+
+        this.lastTime = performance.now();
 
         this.loop();
 
@@ -77,11 +81,13 @@ export default class AnimationLoop {
 
         this.running = false;
 
-        cancelAnimationFrame(
+        if (this.frameId) {
 
-            this.frameId
+            cancelAnimationFrame(this.frameId);
 
-        );
+            this.frameId = null;
+
+        }
 
     }
 
@@ -91,9 +97,7 @@ export default class AnimationLoop {
 
     loop = () => {
 
-        if (!this.running)
-
-            return;
+        if (!this.running) return;
 
         const now = performance.now();
 
@@ -101,17 +105,25 @@ export default class AnimationLoop {
 
         this.lastTime = now;
 
-        this.update();
+        this.fps = this.delta > 0
+            ? Math.round(1000 / this.delta)
+            : 0;
 
-        this.render();
+        try {
 
-        this.frameId =
+            this.update();
 
-            requestAnimationFrame(
+            this.render();
 
-                this.loop
+        }
 
-            );
+        catch (error) {
+
+            console.error("Animation Loop Error:", error);
+
+        }
+
+        this.frameId = requestAnimationFrame(this.loop);
 
     }
 
@@ -121,7 +133,7 @@ export default class AnimationLoop {
 
     update() {
 
-        this.hud.updateFPS();
+        this.hud?.updateFPS?.(this.fps);
 
     }
 
@@ -131,109 +143,127 @@ export default class AnimationLoop {
 
     onResults(results) {
 
-        this.landmark.update(results);
+        if (!results) return;
 
-        const hands =
+        try {
 
-            results.multiHandLandmarks || [];
+            this.landmark?.update(results);
 
-        this.hud.setHands(
+            const hands =
 
-            hands.length
+                results.multiHandLandmarks || [];
 
-        );
+            this.hud?.setHands?.(
 
-        if (!hands.length) {
-
-            this.synth.stopChord();
-
-            return;
-
-        }
-
-        const hand = hands[0];
-
-        const handedness =
-
-            results.multiHandedness?.[0]
-
-            ?.label || "Right";
-
-        this.detector.update(
-
-            hand,
-
-            handedness
-
-        );
-
-        this.tilt.update(hand);
-
-        const chord =
-
-            this.classifier.classify(
-
-                this.detector
+                hands.length
 
             );
 
-        this.synth.playChord(
+            if (!hands.length) {
 
-            chord.chord
+                this.synth?.stopChord?.();
 
-        );
+                return;
 
-        this.synth.update({
+            }
 
-            filter:
+            const hand = hands[0];
 
-                this.tilt.getFilterValue(),
+            const handedness =
 
-            volume:
+                results.multiHandedness?.[0]?.label ||
 
-                this.tilt.getVolume(),
+                "Right";
 
-            vibrato:
+            this.detector.update(
 
-                this.tilt.getVibratoDepth()
+                hand,
 
-        });
+                handedness
 
-        this.energy.update(
+            );
 
-            this.detector.count() / 5
+            this.tilt.update(hand);
 
-        );
+            const chord =
 
-        this.volume.update(
+                this.classifier.classify(
 
-            this.tilt.getVolume()
+                    this.detector
 
-        );
+                );
 
-        this.hud.update({
+            this.synth.playChord(
 
-            chord:
+                chord.chord
 
-                chord.chord,
+            );
 
-            confidence:
+            this.synth.update({
 
-                chord.confidence,
+                filter:
 
-            filter:
+                    this.tilt.getFilterValue(),
 
-                this.tilt.getFilterValue(),
+                volume:
 
-            volume:
+                    this.tilt.getVolume(),
 
-                this.tilt.getVolume(),
+                vibrato:
 
-            key:
+                    this.tilt.getVibratoDepth()
 
-                this.classifier.root
+            });
 
-        });
+            this.energy.update(
+
+                this.detector.count() / 5
+
+            );
+
+            this.volume.update(
+
+                this.tilt.getVolume()
+
+            );
+
+            this.hud.update({
+
+                chord:
+
+                    chord.chord,
+
+                confidence:
+
+                    chord.confidence,
+
+                filter:
+
+                    this.tilt.getFilterValue(),
+
+                volume:
+
+                    this.tilt.getVolume(),
+
+                key:
+
+                    this.classifier.root
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+
+                "Processing Error:",
+
+                error
+
+            );
+
+        }
 
     }
 
@@ -243,11 +273,11 @@ export default class AnimationLoop {
 
     render() {
 
-        this.landmark.render();
+        this.landmark?.render?.();
 
-        this.energy.render();
+        this.energy?.render?.();
 
-        this.volume.render();
+        this.volume?.render?.();
 
     }
 
