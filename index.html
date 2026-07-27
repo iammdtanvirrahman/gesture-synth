@@ -1,125 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Gesture Synth AI - Modular Virtual Guitar</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gesture Synth AI - Air Guitar Engine</title>
+  
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- MediaPipe CDN Dependencies -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.4/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
-
-  <!-- Tone.js Web Audio Engine -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-
-  <!-- Main CSS -->
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="app-wrapper">
-    <!-- App Header -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18V5l12-2v13"></path>
-            <circle cx="6" cy="18" r="3"></circle>
-            <circle cx="18" cy="16" r="3"></circle>
-          </svg>
-        </div>
-        <div>
-          <h1>Gesture Synth <span class="accent-text">AI</span></h1>
-          <p class="subtitle">Virtual Air Guitar Engine</p>
-        </div>
+  <div id="stage">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="overlay" class="dimmed"></canvas>
+
+    <!-- Top Left HUD Metrics -->
+    <div class="hud-top-left">
+      <div class="hud-metric">
+        <span class="metric-label">FPS</span>
+        <span class="metric-value" id="val-fps">0</span>
+      </div>
+      <div class="hud-metric">
+        <span class="metric-label">Hands</span>
+        <span class="metric-value" id="val-hands">0 Tracked</span>
+      </div>
+    </div>
+
+    <!-- Top Right Controls -->
+    <div class="controls-overlay">
+      <div class="control-group">
+        <label for="keySelect">KEY</label>
+        <select id="keySelect">
+          <option value="220.00" data-note="A" selected>A Major / F#m</option>
+          <option value="233.08" data-note="Bb">A#/Bb Major</option>
+          <option value="246.94" data-note="B">B Major</option>
+          <option value="261.63" data-note="C">C Major / Am</option>
+          <option value="277.18" data-note="Db">C#/Db Major</option>
+          <option value="293.66" data-note="D">D Major</option>
+          <option value="311.13" data-note="Eb">D#/Eb Major</option>
+          <option value="329.63" data-note="E">E Major</option>
+          <option value="349.23" data-note="F">F Major</option>
+          <option value="369.99" data-note="Gb">F#/Gb Major</option>
+          <option value="392.00" data-note="G">G Major</option>
+          <option value="415.30" data-note="Ab">G#/Ab Major</option>
+        </select>
       </div>
 
-      <div class="system-status">
-        <div class="status-badge" id="camera-status">
-          <span class="status-dot warning"></span>
-          <span id="camera-status-text">Audio Engine Stopped</span>
-        </div>
+      <div class="control-group">
+        <label for="toneSelect">SYNTH TONE</label>
+        <select id="toneSelect">
+          <option value="triangle" selected>Warm Synth</option>
+          <option value="sawtooth">Bright Synth</option>
+          <option value="square">Retro Square</option>
+          <option value="sine">Pure Soft Sine</option>
+        </select>
       </div>
-    </header>
 
-    <!-- Main Workspace -->
-    <main class="app-main">
-      <!-- Camera & Canvas Viewport -->
-      <section class="viewport-card glass-panel">
-        <div class="viewport-container" id="viewport-container">
-          <!-- Audio Start Overlay -->
-          <div id="audio-overlay" class="audio-overlay">
-            <button id="btn-start-synth" class="synth-start-btn">
-              <span class="btn-icon">🎸</span>
-              <span>START VIRTUAL GUITAR</span>
-            </button>
-          </div>
+      <div id="distortionDisplay" class="hud-badge">Filter: 0%</div>
+    </div>
 
-          <!-- Hidden raw video element -->
-          <video id="webcam" playsinline muted style="display: none;"></video>
-          <canvas id="output-canvas"></canvas>
+    <!-- Right Side Volume Meter -->
+    <div id="volumeMeter">
+      <div class="vol-bar" data-index="7"></div>
+      <div class="vol-bar" data-index="6"></div>
+      <div class="vol-bar" data-index="5"></div>
+      <div class="vol-bar" data-index="4"></div>
+      <div class="vol-bar" data-index="3"></div>
+      <div class="vol-bar" data-index="2"></div>
+      <div class="vol-bar" data-index="1"></div>
+      <div class="vol-bar" data-index="0"></div>
+    </div>
 
-          <!-- Top HUD Overlay -->
-          <div class="hud-top-left">
-            <div class="hud-metric">
-              <span class="metric-label">FPS</span>
-              <span class="metric-value" id="val-fps">0</span>
-            </div>
-            <div class="hud-metric">
-              <span class="metric-label">Tracking</span>
-              <span class="metric-value" id="val-confidence">0%</span>
-            </div>
-          </div>
+    <!-- Center Active Chord HUD -->
+    <div class="hud-bottom-center">
+      <div id="chordDisplay">--</div>
+      <div id="qualityDisplay">Show hands to play</div>
+    </div>
 
-          <div class="hud-top-right">
-            <div class="hand-indicator" id="hand-indicator">
-              <span class="indicator-icon">🖐</span>
-              <span id="val-hand-presence">Show 2 Hands</span>
-            </div>
-          </div>
+    <button id="helpButton" title="How to play">?</button>
 
-          <!-- Active Chord Banner -->
-          <div class="hud-bottom-center">
-            <div class="gesture-display-card">
-              <span class="gesture-sub">Current Status</span>
-              <h2 class="gesture-title" id="val-gesture">SILENT</h2>
-            </div>
-          </div>
-        </div>
-      </section>
+    <!-- Help Modal -->
+    <div id="helpModal" class="hidden">
+      <div class="help-content">
+        <button id="closeHelp">✕</button>
+        <h2>Gesture Synth Guide</h2>
 
-      <!-- Sidebar -->
-      <aside class="sidebar-panel glass-panel">
-        <div class="panel-header">
-          <h3>Guitar Chords Mapping</h3>
-          <span class="badge" id="gesture-count-badge">8 Chords</span>
-        </div>
+        <h3>✋ Left Hand (Root Chord)</h3>
+        <p><b>Tilt:</b> Inward → Minor Mode | Outward → Major Mode</p>
+        <p><b>Fingers Extended:</b><br>
+        1 → Scale I | 2 → Scale II | 3 → Scale III | 4 → Scale IV | 5 → Scale V<br>
+        Index + Pinky → Scale VI<br>
+        Index + Pinky + Thumb → Scale VII</p>
 
-        <div class="gesture-grid" id="gesture-grid"></div>
+        <h3>🤚 Right Hand (Voicing & Modifiers)</h3>
+        <p><b>Fingers Extended:</b><br>
+        1 → Root Position | 2 → 1st Inversion<br>
+        3 → Major/Minor 7th | 4 → Dominant/Diminished 7th</p>
+        <p><b>Thumb Out:</b> Octave Down (-8ve)</p>
+        <p><b>Height:</b> Higher → Louder | Lower → Softer</p>
+        <p><b>Tilt:</b> Inward → Warm Filter | Outward → Squelch Filter Sweep</p>
+      </div>
+    </div>
 
-        <div class="panel-footer">
-          <div class="extensibility-card">
-            <h4>⚡ How to Play (২ হাতের নিয়ম)</h4>
-            <p>• <b>বাম হাত:</b> কর্ড সিলেক্ট করুন (যেমন: ✋, ✊, ✌️)<br>• <b>ডান হাত:</b> তর্জনী ও বৃদ্ধাঙ্গুলি চিমটি (Pinch 👌) কাটলেই তার বাজবে!</p>
-          </div>
-        </div>
-      </aside>
-    </main>
-
-    <footer class="app-footer">
-      <span>Gesture Synth Engine v3.5</span>
-      <span class="footer-divider">•</span>
-      <span>Real-Time Pinch-Pluck Guitar Synth</span>
-    </footer>
+    <!-- Audio Enable Overlay -->
+    <div id="startOverlay">
+      <div class="start-circle">▶</div>
+      <div class="start-text">CLICK TO START GESTURE SYNTH</div>
+    </div>
   </div>
 
-  <!-- Modular Scripts Import -->
-  <script src="gestures.js"></script>
-  <script src="synth.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
