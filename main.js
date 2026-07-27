@@ -1,7 +1,5 @@
-import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { inject } from "@vercel/analytics";
-
-inject();
+// Direct CDN Import for GitHub Pages Support
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
 
 // ---- DOM References ----
 const videoEl = document.getElementById("webcam");
@@ -334,7 +332,7 @@ function getSolidNotes(tones, rightHandCount, isMajorMode) {
   }
 }
 
-// ---- Setup & Loop ----
+// ---- Setup & Camera ----
 async function setupCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: { width: 640, height: 480 }, audio: false
