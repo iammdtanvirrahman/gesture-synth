@@ -7,27 +7,43 @@ export default class HUD {
 
     constructor() {
 
-        this.elements = {
+        const find = (...ids) => {
 
-            fps: document.getElementById("fps"),
+            for (const id of ids) {
 
-            hands: document.getElementById("hands"),
+                const el = document.getElementById(id);
 
-            chord: document.getElementById("chordDisplay"),
+                if (el) return el;
 
-            quality: document.getElementById("qualityDisplay"),
+            }
 
-            status: document.getElementById("aiStatus"),
-
-            confidence: document.getElementById("confidence"),
-
-            filter: document.getElementById("filterValue"),
-
-            volume: document.getElementById("volumeValue"),
-
-            key: document.getElementById("currentKey")
+            return null;
 
         };
+
+        this.elements = {
+
+            fps: find("fps"),
+
+            hands: find("hands"),
+
+            chord: find("chordDisplay", "chord"),
+
+            quality: find("qualityDisplay", "quality"),
+
+            status: find("aiStatus", "status"),
+
+            confidence: find("confidence"),
+
+            filter: find("filterValue", "filter"),
+
+            volume: find("volumeValue", "volume"),
+
+            key: find("currentKey", "key")
+
+        };
+
+        this.cache = {};
 
         this.lastFrame = performance.now();
 
@@ -38,10 +54,40 @@ export default class HUD {
     }
 
     /* ======================================
-       FPS
+        Safe Text Update
     ====================================== */
 
-    updateFPS() {
+    setText(element, value) {
+
+        if (!element) return;
+
+        if (element.textContent === String(value)) return;
+
+        element.textContent = value;
+
+    }
+
+    /* ======================================
+        FPS
+    ====================================== */
+
+    updateFPS(value = null) {
+
+        if (value !== null) {
+
+            this.fps = value;
+
+            this.setText(
+
+                this.elements.fps,
+
+                value
+
+            );
+
+            return;
+
+        }
 
         this.frames++;
 
@@ -55,122 +101,158 @@ export default class HUD {
 
             this.lastFrame = now;
 
-            if (this.elements.fps)
+            this.setText(
 
-                this.elements.fps.textContent = this.fps;
+                this.elements.fps,
+
+                this.fps
+
+            );
 
         }
 
     }
 
     /* ======================================
-       Hands
+        Hands
     ====================================== */
 
     setHands(count) {
 
-        if (!this.elements.hands) return;
+        this.setText(
 
-        this.elements.hands.textContent = count;
+            this.elements.hands,
+
+            count
+
+        );
 
     }
 
     /* ======================================
-       Chord
+        Chord
     ====================================== */
 
     setChord(chord) {
 
-        if (!this.elements.chord) return;
+        this.setText(
 
-        this.elements.chord.textContent = chord;
+            this.elements.chord,
+
+            chord
+
+        );
 
     }
 
     /* ======================================
-       Quality
+        Quality
     ====================================== */
 
     setQuality(text) {
 
-        if (!this.elements.quality) return;
+        this.setText(
 
-        this.elements.quality.textContent = text;
+            this.elements.quality,
+
+            text
+
+        );
 
     }
 
     /* ======================================
-       AI Status
+        AI Status
     ====================================== */
 
     setStatus(text, good = true) {
 
         if (!this.elements.status) return;
 
-        this.elements.status.textContent = text;
+        this.setText(
+
+            this.elements.status,
+
+            text
+
+        );
 
         this.elements.status.className =
 
-            good ? "success" : "danger";
+            good
+
+                ? "success"
+
+                : "danger";
 
     }
 
     /* ======================================
-       Confidence
+        Confidence
     ====================================== */
 
     setConfidence(value) {
 
-        if (!this.elements.confidence) return;
+        this.setText(
 
-        this.elements.confidence.textContent =
+            this.elements.confidence,
 
-            `${Math.round(value * 100)}%`;
+            `${Math.round(value * 100)}%`
+
+        );
 
     }
 
     /* ======================================
-       Filter
+        Filter
     ====================================== */
 
     setFilter(value) {
 
-        if (!this.elements.filter) return;
+        this.setText(
 
-        this.elements.filter.textContent =
+            this.elements.filter,
 
-            `${Math.round(value)} Hz`;
+            `${Math.round(value)} Hz`
+
+        );
 
     }
 
     /* ======================================
-       Volume
+        Volume
     ====================================== */
 
     setVolume(value) {
 
-        if (!this.elements.volume) return;
+        this.setText(
 
-        this.elements.volume.textContent =
+            this.elements.volume,
 
-            `${Math.round(value * 100)}%`;
+            `${Math.round(value * 100)}%`
+
+        );
 
     }
 
     /* ======================================
-       Key
+        Key
     ====================================== */
 
     setKey(key) {
 
-        if (!this.elements.key) return;
+        this.setText(
 
-        this.elements.key.textContent = key;
+            this.elements.key,
+
+            key
+
+        );
 
     }
 
     /* ======================================
-       Update All
+        Update
     ====================================== */
 
     update(data = {}) {
@@ -178,36 +260,52 @@ export default class HUD {
         this.updateFPS();
 
         if (data.hands !== undefined)
-
             this.setHands(data.hands);
 
-        if (data.chord)
-
+        if (data.chord !== undefined)
             this.setChord(data.chord);
 
-        if (data.quality)
-
+        if (data.quality !== undefined)
             this.setQuality(data.quality);
 
-        if (data.status)
-
+        if (data.status !== undefined)
             this.setStatus(data.status);
 
         if (data.confidence !== undefined)
-
             this.setConfidence(data.confidence);
 
         if (data.filter !== undefined)
-
             this.setFilter(data.filter);
 
         if (data.volume !== undefined)
-
             this.setVolume(data.volume);
 
-        if (data.key)
-
+        if (data.key !== undefined)
             this.setKey(data.key);
+
+    }
+
+    /* ======================================
+        Reset
+    ====================================== */
+
+    reset() {
+
+        this.update({
+
+            hands: 0,
+
+            chord: "-",
+
+            confidence: 0,
+
+            filter: 0,
+
+            volume: 0,
+
+            key: "-"
+
+        });
 
     }
 
