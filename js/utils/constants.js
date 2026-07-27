@@ -1,11 +1,11 @@
 /* ==========================================================
    Gesture Synth AI
-   constants.js
+   utils/constants.js
 ========================================================== */
 
-/* ========= MediaPipe Hand Landmark Index ========= */
+/* ========= MediaPipe Landmark Index ========= */
 
-export const LANDMARK = {
+export const LANDMARK = Object.freeze({
 
     WRIST: 0,
 
@@ -34,99 +34,75 @@ export const LANDMARK = {
     PINKY_DIP: 19,
     PINKY_TIP: 20
 
-};
+});
 
 /* ========= Finger Names ========= */
 
-export const FINGERS = [
+export const FINGERS = Object.freeze([
 
     "Thumb",
-
     "Index",
-
     "Middle",
-
     "Ring",
-
     "Pinky"
 
-];
+]);
 
 /* ========= Finger Tips ========= */
 
-export const FINGER_TIPS = [
+export const FINGER_TIPS = Object.freeze([
 
     LANDMARK.THUMB_TIP,
-
     LANDMARK.INDEX_TIP,
-
     LANDMARK.MIDDLE_TIP,
-
     LANDMARK.RING_TIP,
-
     LANDMARK.PINKY_TIP
 
-];
+]);
 
 /* ========= Finger PIP ========= */
 
-export const FINGER_PIPS = [
+export const FINGER_PIPS = Object.freeze([
 
     LANDMARK.THUMB_IP,
-
     LANDMARK.INDEX_PIP,
-
     LANDMARK.MIDDLE_PIP,
-
     LANDMARK.RING_PIP,
-
     LANDMARK.PINKY_PIP
 
-];
+]);
 
 /* ========= Major Scale ========= */
 
-export const MAJOR_SCALE = [
+export const MAJOR_SCALE = Object.freeze([
 
     "I",
-
     "ii",
-
     "iii",
-
     "IV",
-
     "V",
-
     "vi",
-
     "vii°"
 
-];
+]);
 
 /* ========= Chord Quality ========= */
 
-export const CHORD_QUALITY = {
+export const CHORD_QUALITY = Object.freeze({
 
     MAJOR: "Major",
-
     MINOR: "Minor",
-
     DIMINISHED: "Dim",
-
     AUGMENTED: "Aug",
-
     SUS2: "Sus2",
-
     SUS4: "Sus4",
-
     POWER: "5"
 
-};
+});
 
-/* ========= Semitone ========= */
+/* ========= Intervals ========= */
 
-export const INTERVAL = {
+export const INTERVAL = Object.freeze({
 
     ROOT: 0,
 
@@ -154,61 +130,44 @@ export const INTERVAL = {
 
     OCTAVE: 12
 
-};
+});
 
 /* ========= Note Names ========= */
 
-export const NOTE_NAMES = [
+export const NOTE_NAMES = Object.freeze([
 
     "C",
-
     "C#",
-
     "D",
-
     "D#",
-
     "E",
-
     "F",
-
     "F#",
-
     "G",
-
     "G#",
-
     "A",
-
     "A#",
-
     "B"
 
-];
+]);
 
 /* ========= Default Chords ========= */
 
-export const DEFAULT_CHORDS = {
+export const DEFAULT_CHORDS = Object.freeze({
 
     1: "I",
-
     2: "ii",
-
     3: "iii",
-
     4: "IV",
-
     5: "V",
-
     6: "vi",
-
     7: "vii°"
 
-};
+});
 
-/* ========= Colors ========= */
+/* ========= Theme Colors ========= */
 
-export const COLORS = {
+export const COLORS = Object.freeze({
 
     CYAN: "#00F3FF",
 
@@ -220,7 +179,7 @@ export const COLORS = {
 
     WHITE: "#FFFFFF"
 
-};
+});
 
 /* ========= FPS ========= */
 
