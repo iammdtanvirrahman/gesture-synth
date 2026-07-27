@@ -3,6 +3,7 @@
    gesture/HandTilt.js
 ========================================================== */
 
+import APP_CONFIG from "../config.js";
 import { LANDMARK } from "../utils/constants.js";
 
 export default class HandTilt {
@@ -12,46 +13,76 @@ export default class HandTilt {
         this.landmarks = null;
 
         this.angle = 0;
-
         this.pitch = 0;
-
         this.roll = 0;
-
         this.yaw = 0;
 
+        this.smooth = 0.15;
+
     }
+
+    /* ======================================
+        Update
+    ====================================== */
 
     update(landmarks) {
 
         this.landmarks = landmarks;
 
+        if (!landmarks) {
+
+            this.reset();
+
+            return;
+
+        }
+
         this.calculate();
 
     }
 
+    /* ======================================
+        Calculate
+    ====================================== */
+
     calculate() {
 
-        if (!this.landmarks) return;
-
         const wrist = this.landmarks[LANDMARK.WRIST];
-
         const middle = this.landmarks[LANDMARK.MIDDLE_MCP];
 
-        const dx = middle.x - wrist.x;
+        if (!wrist || !middle) return;
 
+        const dx = middle.x - wrist.x;
         const dy = middle.y - wrist.y;
 
-        this.angle = Math.atan2(dy, dx);
+        const angle = Math.atan2(dy, dx);
 
-        this.roll = this.angle;
+        this.angle +=
+            (angle - this.angle) * this.smooth;
 
-        this.pitch = (0.5 - wrist.y) * 2;
+        const pitch =
+            (0.5 - wrist.y) * 2;
 
-        this.yaw = (0.5 - wrist.x) * 2;
+        const yaw =
+            (0.5 - wrist.x) * 2;
+
+        const roll =
+            this.angle / Math.PI;
+
+        this.pitch +=
+            (pitch - this.pitch) * this.smooth;
+
+        this.yaw +=
+            (yaw - this.yaw) * this.smooth;
+
+        this.roll +=
+            (roll - this.roll) * this.smooth;
 
     }
 
-    /* ======================================= */
+    /* ======================================
+        Getters
+    ====================================== */
 
     getAngle() {
 
@@ -77,9 +108,11 @@ export default class HandTilt {
 
     }
 
-    /* ======================================= */
+    /* ======================================
+        Audio Mapping
+    ====================================== */
 
-    getFilterValue(min = 250, max = 5000) {
+    getFilterValue() {
 
         const t = Math.max(
 
@@ -95,7 +128,17 @@ export default class HandTilt {
 
         );
 
-        return min + (max - min) * t;
+        return
+
+            APP_CONFIG.FILTER.min +
+
+            (
+
+                APP_CONFIG.FILTER.max -
+
+                APP_CONFIG.FILTER.min
+
+            ) * t;
 
     }
 
@@ -135,7 +178,9 @@ export default class HandTilt {
 
     }
 
-    /* ======================================= */
+    /* ======================================
+        Data
+    ====================================== */
 
     getData() {
 
@@ -156,6 +201,24 @@ export default class HandTilt {
             vibrato: this.getVibratoDepth()
 
         };
+
+    }
+
+    /* ======================================
+        Reset
+    ====================================== */
+
+    reset() {
+
+        this.landmarks = null;
+
+        this.angle = 0;
+
+        this.pitch = 0;
+
+        this.roll = 0;
+
+        this.yaw = 0;
 
     }
 
