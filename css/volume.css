@@ -1,0 +1,162 @@
+/* ==========================================================
+   Gesture Synth AI
+   volume.css
+========================================================== */
+
+/* ========= Volume Container ========= */
+
+#volumeMeter{
+
+    position:absolute;
+
+    top:20px;
+
+    right:20px;
+
+    width:28px;
+
+    height:260px;
+
+    display:flex;
+
+    flex-direction:column-reverse;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    z-index:140;
+
+}
+
+/* ========= Volume Bar ========= */
+
+.vol-bar{
+
+    width:18px;
+
+    height:24px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.08);
+
+    border:1px solid rgba(255,255,255,.05);
+
+    transition:
+
+        background .18s ease,
+
+        transform .18s ease,
+
+        box-shadow .18s ease,
+
+        opacity .18s ease;
+
+    opacity:.45;
+
+}
+
+/* ========= Active ========= */
+
+.vol-bar.lit{
+
+    opacity:1;
+
+    background:linear-gradient(
+
+        180deg,
+
+        var(--gold),
+
+        var(--orange)
+
+    );
+
+    border-color:rgba(255,255,255,.18);
+
+    transform:scaleX(1.18);
+
+    box-shadow:
+
+        0 0 12px rgba(232,161,61,.45),
+
+        0 0 28px rgba(232,161,61,.25);
+
+}
+
+/* ========= Peak ========= */
+
+.vol-bar.lit:last-child{
+
+    background:linear-gradient(
+
+        180deg,
+
+        #ff5d5d,
+
+        #ff9b45
+
+    );
+
+    box-shadow:
+
+        0 0 16px rgba(255,80,80,.65),
+
+        0 0 36px rgba(255,80,80,.35);
+
+}
+
+/* ========= Idle Animation ========= */
+
+@keyframes volumeIdle{
+
+    0%{
+
+        opacity:.30;
+
+    }
+
+    50%{
+
+        opacity:.55;
+
+    }
+
+    100%{
+
+        opacity:.30;
+
+    }
+
+}
+
+.vol-bar:not(.lit){
+
+    animation:volumeIdle 2s infinite ease-in-out;
+
+}
+
+/* ========= Responsive ========= */
+
+@media (max-width:768px){
+
+    #volumeMeter{
+
+        height:190px;
+
+        width:22px;
+
+        right:14px;
+
+    }
+
+    .vol-bar{
+
+        width:14px;
+
+        height:18px;
+
+    }
+
+}
