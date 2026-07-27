@@ -1,0 +1,227 @@
+/* ==========================================================
+   Gesture Synth AI
+   landing.css
+========================================================== */
+
+/* ========= Hero Title ========= */
+
+.landing-content h1{
+
+    font-size:clamp(3rem,7vw,5.5rem);
+
+    font-weight:800;
+
+    line-height:1.05;
+
+    letter-spacing:-2px;
+
+    color:var(--text-primary);
+
+    text-shadow:
+        0 0 30px rgba(0,243,255,.18);
+
+    animation:titleFade 1s ease;
+
+}
+
+/* ========= Hero Paragraph ========= */
+
+.landing-content p{
+
+    width:min(640px,90%);
+
+    color:var(--text-secondary);
+
+    font-size:1.1rem;
+
+    line-height:1.8;
+
+    animation:titleFade 1.3s ease;
+
+}
+
+/* ========= Start Button ========= */
+
+#startExperience{
+
+    margin-top:8px;
+
+    padding:18px 42px;
+
+    border-radius:999px;
+
+    border:1px solid rgba(0,243,255,.25);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--cyan),
+            var(--cyan-dark)
+        );
+
+    color:#001418;
+
+    font-weight:700;
+
+    font-size:1rem;
+
+    transition:.3s;
+
+    box-shadow:
+        0 0 25px rgba(0,243,255,.35);
+
+}
+
+#startExperience:hover{
+
+    transform:
+        translateY(-3px)
+        scale(1.04);
+
+    box-shadow:
+        0 0 45px rgba(0,243,255,.55);
+
+}
+
+#startExperience:active{
+
+    transform:scale(.97);
+
+}
+
+/* ========= Feature List ========= */
+
+.landing-features{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+    gap:12px;
+
+    margin-top:10px;
+
+}
+
+/* ========= Feature Badge ========= */
+
+.landing-features span{
+
+    padding:10px 18px;
+
+    border-radius:999px;
+
+    background:var(--glass-bg);
+
+    border:1px solid var(--glass-border);
+
+    color:var(--text-secondary);
+
+    backdrop-filter:blur(var(--glass-blur));
+
+    transition:.25s;
+
+}
+
+.landing-features span:hover{
+
+    border-color:var(--border-active);
+
+    color:var(--cyan);
+
+    transform:translateY(-2px);
+
+}
+
+/* ========= Loading ========= */
+
+.loading-card h2{
+
+    font-size:1.8rem;
+
+    margin-bottom:18px;
+
+}
+
+#loadingPercent{
+
+    margin-top:14px;
+
+    color:var(--cyan);
+
+    font-size:1.2rem;
+
+    font-weight:700;
+
+}
+
+#loadingStatus{
+
+    margin-top:10px;
+
+    color:var(--text-muted);
+
+    font-size:.95rem;
+
+}
+
+/* ========= Logo Animation ========= */
+
+.logo-circle{
+
+    animation:
+        pulseLogo 3s infinite ease-in-out;
+
+}
+
+/* ========= Keyframes ========= */
+
+@keyframes pulseLogo{
+
+    0%{
+
+        transform:scale(1);
+
+        box-shadow:0 0 20px rgba(0,243,255,.25);
+
+    }
+
+    50%{
+
+        transform:scale(1.08);
+
+        box-shadow:0 0 45px rgba(0,243,255,.55);
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+        box-shadow:0 0 20px rgba(0,243,255,.25);
+
+    }
+
+}
+
+@keyframes titleFade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
