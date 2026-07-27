@@ -225,3 +225,217 @@ export default class MusicTheory {
     }
 
 }
+/* ==========================================================
+   SynthEngine.js
+   Part 2
+========================================================== */
+
+/* ======================================
+    Create Voice
+====================================== */
+
+createVoice(frequency){
+
+    const osc=this.audio.createOscillator();
+
+    const gain=this.audio.createGain();
+
+    osc.type=APP_CONFIG.AUDIO.waveform;
+
+    osc.frequency.value=frequency;
+
+    gain.gain.value=0;
+
+    osc.connect(gain);
+
+    gain.connect(this.filter);
+
+    osc.start();
+
+    return{
+
+        osc,
+
+        gain
+
+    };
+
+}
+
+/* ======================================
+    ADSR Attack
+====================================== */
+
+attack(gain){
+
+    const now=this.audio.currentTime;
+
+    gain.gain.cancelScheduledValues(now);
+
+    gain.gain.setValueAtTime(0,now);
+
+    gain.gain.linearRampToValueAtTime(
+
+        0.25,
+
+        now+APP_CONFIG.AUDIO.attack
+
+    );
+
+}
+
+/* ======================================
+    ADSR Release
+====================================== */
+
+release(gain){
+
+    const now=this.audio.currentTime;
+
+    gain.gain.cancelScheduledValues(now);
+
+    gain.gain.setValueAtTime(
+
+        gain.gain.value,
+
+        now
+
+    );
+
+    gain.gain.linearRampToValueAtTime(
+
+        0,
+
+        now+APP_CONFIG.AUDIO.release
+
+    );
+
+}
+
+/* ======================================
+    Stop Voices
+====================================== */
+
+stopChord(){
+
+    this.gains.forEach(g=>{
+
+        this.release(g);
+
+    });
+
+    setTimeout(()=>{
+
+        this.oscillators.forEach(o=>{
+
+            try{
+
+                o.stop();
+
+                o.disconnect();
+
+            }
+
+            catch(e){}
+
+        });
+
+        this.oscillators=[];
+
+        this.gains=[];
+
+        this.activeChord=[];
+
+    },400);
+
+}
+
+/* ======================================
+    Play Chord
+====================================== */
+
+playChord(chordName){
+
+    if(!this.ready) return;
+
+    if(chordName==="Mute"){
+
+        this.stopChord();
+
+        return;
+
+    }
+
+    if(this.activeChord.join(",")===chordName)
+
+        return;
+
+    this.stopChord();
+
+    const notes=
+
+        this.theory.build(chordName);
+
+    this.activeChord=[chordName];
+
+    notes.forEach(note=>{
+
+        const freq=
+
+            this.theory.frequency(note);
+
+        const voice=
+
+            this.createVoice(freq);
+
+        this.oscillators.push(
+
+            voice.osc
+
+        );
+
+        this.gains.push(
+
+            voice.gain
+
+        );
+
+        this.attack(
+
+            voice.gain
+
+        );
+
+    });
+
+}
+
+/* ======================================
+    Glide
+====================================== */
+
+setDetune(value){
+
+    this.oscillators.forEach(osc=>{
+
+        osc.detune.linearRampToValueAtTime(
+
+            value,
+
+            this.audio.currentTime+.05
+
+        );
+
+    });
+
+}
+
+/* ======================================
+    Panic
+====================================== */
+
+panic(){
+
+    this.stopChord();
+
+}
