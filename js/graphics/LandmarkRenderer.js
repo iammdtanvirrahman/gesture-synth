@@ -5,98 +5,30 @@
 
 export default class LandmarkRenderer {
 
-    constructor(canvas){
+    constructor(canvas) {
 
-        this.canvas=canvas;
+        if (!canvas) {
 
-        this.ctx=canvas.getContext("2d");
-
-        this.landmarks=[];
-
-        this.connections=[];
-
-        this.glowColor="#00F3FF";
-
-        this.nodeRadius=6;
-
-        this.lineWidth=3;
-
-    }
-
-    update(results){
-
-        this.landmarks=
-
-            results.multiHandLandmarks||[];
-
-    }
-
-    clear(){
-
-        this.ctx.clearRect(
-
-            0,
-            0,
-            this.canvas.width,
-            this.canvas.height
-
-        );
-
-    }
-
-    render(){
-
-        this.clear();
-
-        this.landmarks.forEach(hand=>{
-
-            this.drawConnections(hand);
-
-            this.drawPoints(hand);
-
-        });
-
-    }
-
-    /* ===================================== */
-
-    drawPoints(hand){
-
-        hand.forEach(point=>{
-
-            const x=point.x*this.canvas.width;
-
-            const y=point.y*this.canvas.height;
-
-            this.ctx.beginPath();
-
-            this.ctx.arc(
-
-                x,
-                y,
-                this.nodeRadius,
-                0,
-                Math.PI*2
-
+            throw new Error(
+                "LandmarkRenderer: Canvas not found."
             );
 
-            this.ctx.fillStyle=this.glowColor;
+        }
 
-            this.ctx.shadowBlur=20;
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
 
-            this.ctx.shadowColor=this.glowColor;
+        this.landmarks = [];
 
-            this.ctx.fill();
+        this.glowColor = "#00F3FF";
 
-        });
+        this.nodeRadius = 6;
 
-    }
+        this.lineWidth = 3;
 
-    /* ===================================== */
+        this.previous = null;
 
-    drawConnections(hand){
-
-        const pairs=[
+        this.connectionPairs = [
 
             [0,1],[1,2],[2,3],[3,4],
 
@@ -112,214 +44,340 @@ export default class LandmarkRenderer {
 
         ];
 
-        this.ctx.strokeStyle=this.glowColor;
+    }
 
-        this.ctx.lineWidth=this.lineWidth;
+    /* =====================================
+        Update
+    ===================================== */
 
-        this.ctx.shadowBlur=10;
+    update(results) {
 
-        this.ctx.shadowColor=this.glowColor;
+        this.landmarks =
 
-        pairs.forEach(pair=>{
-
-            const a=hand[pair[0]];
-
-            const b=hand[pair[1]];
-
-            this.ctx.beginPath();
-
-            this.ctx.moveTo(
-
-                a.x*this.canvas.width,
-
-                a.y*this.canvas.height
-
-            );
-
-            this.ctx.lineTo(
-
-                b.x*this.canvas.width,
-
-                b.y*this.canvas.height
-
-            );
-
-            this.ctx.stroke();
-
-        });
+            results?.multiHandLandmarks || [];
 
     }
 
-}
-/* ==========================================================
-   LandmarkRenderer.js
-   Part 2
-   Premium Effects
-========================================================== */
+    /* =====================================
+        Clear
+    ===================================== */
 
-/* ======================================
-    Fingertip Glow
-====================================== */
+    clear() {
 
-drawFingerTips(hand){
+        this.ctx.clearRect(
 
-    const tips=[4,8,12,16,20];
+            0,
 
-    tips.forEach(i=>{
+            0,
 
-        const p=hand[i];
+            this.canvas.width,
 
-        const x=p.x*this.canvas.width;
-
-        const y=p.y*this.canvas.height;
-
-        const g=this.ctx.createRadialGradient(
-
-            x,y,2,
-            x,y,22
+            this.canvas.height
 
         );
 
-        g.addColorStop(0,"#ffffff");
+    }
 
-        g.addColorStop(.3,"#00F3FF");
+    /* =====================================
+        Pulse Animation
+    ===================================== */
 
-        g.addColorStop(1,"transparent");
+    pulse() {
 
-        this.ctx.fillStyle=g;
+        this.nodeRadius =
 
-        this.ctx.beginPath();
+            5 +
 
-        this.ctx.arc(
+            Math.sin(
+
+                performance.now() * 0.005
+
+            );
+
+    }
+
+    /* =====================================
+        Draw Connections
+    ===================================== */
+
+    drawConnections(hand) {
+
+        const ctx = this.ctx;
+
+        ctx.strokeStyle = this.glowColor;
+
+        ctx.lineWidth = this.lineWidth;
+
+        ctx.shadowBlur = 10;
+
+        ctx.shadowColor = this.glowColor;
+
+        for (const pair of this.connectionPairs) {
+
+            const a = hand[pair[0]];
+            const b = hand[pair[1]];
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+
+                a.x * this.canvas.width,
+
+                a.y * this.canvas.height
+
+            );
+
+            ctx.lineTo(
+
+                b.x * this.canvas.width,
+
+                b.y * this.canvas.height
+
+            );
+
+            ctx.stroke();
+
+        }
+
+    }
+
+    /* =====================================
+        Draw Points
+    ===================================== */
+
+    drawPoints(hand) {
+
+        const ctx = this.ctx;
+
+        ctx.fillStyle = this.glowColor;
+
+        ctx.shadowBlur = 20;
+
+        ctx.shadowColor = this.glowColor;
+
+        for (const point of hand) {
+
+            ctx.beginPath();
+
+            ctx.arc(
+
+                point.x * this.canvas.width,
+
+                point.y * this.canvas.height,
+
+                this.nodeRadius,
+
+                0,
+
+                Math.PI * 2
+
+            );
+
+            ctx.fill();
+
+        }
+
+    }
+       /* =====================================
+        Fingertip Glow
+    ===================================== */
+
+    drawFingerTips(hand) {
+
+        const tips = [4, 8, 12, 16, 20];
+
+        const ctx = this.ctx;
+
+        for (const i of tips) {
+
+            const p = hand[i];
+
+            const x = p.x * this.canvas.width;
+
+            const y = p.y * this.canvas.height;
+
+            const gradient = ctx.createRadialGradient(
+
+                x, y, 2,
+
+                x, y, 22
+
+            );
+
+            gradient.addColorStop(0, "#FFFFFF");
+
+            gradient.addColorStop(0.35, "#00F3FF");
+
+            gradient.addColorStop(1, "rgba(0,243,255,0)");
+
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+
+            ctx.arc(
+
+                x,
+
+                y,
+
+                22,
+
+                0,
+
+                Math.PI * 2
+
+            );
+
+            ctx.fill();
+
+        }
+
+    }
+
+    /* =====================================
+        Motion Trail
+    ===================================== */
+
+    drawTrail(hand) {
+
+        if (!this.previous) {
+
+            this.previous = hand.map(p => ({ ...p }));
+
+            return;
+
+        }
+
+        const ctx = this.ctx;
+
+        ctx.strokeStyle =
+
+            "rgba(0,243,255,.15)";
+
+        ctx.lineWidth = 2;
+
+        for (let i = 0; i < hand.length; i++) {
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+
+                this.previous[i].x * this.canvas.width,
+
+                this.previous[i].y * this.canvas.height
+
+            );
+
+            ctx.lineTo(
+
+                hand[i].x * this.canvas.width,
+
+                hand[i].y * this.canvas.height
+
+            );
+
+            ctx.stroke();
+
+        }
+
+        this.previous = hand.map(
+
+            p => ({ ...p })
+
+        );
+
+    }
+
+    /* =====================================
+        Energy Ring
+    ===================================== */
+
+    drawEnergy(hand) {
+
+        const wrist = hand[0];
+
+        if (!wrist) return;
+
+        const ctx = this.ctx;
+
+        const x = wrist.x * this.canvas.width;
+
+        const y = wrist.y * this.canvas.height;
+
+        const radius =
+
+            40 +
+
+            Math.sin(
+
+                performance.now() * 0.01
+
+            ) * 8;
+
+        ctx.beginPath();
+
+        ctx.arc(
 
             x,
+
             y,
-            22,
+
+            radius,
+
             0,
-            Math.PI*2
+
+            Math.PI * 2
 
         );
 
-        this.ctx.fill();
+        ctx.strokeStyle =
 
-    });
+            "rgba(0,243,255,.35)";
 
-}
+        ctx.lineWidth = 2;
 
-/* ======================================
-    Energy Ring
-====================================== */
-
-drawEnergy(hand){
-
-    const wrist=hand[0];
-
-    const x=wrist.x*this.canvas.width;
-
-    const y=wrist.y*this.canvas.height;
-
-    this.ctx.beginPath();
-
-    this.ctx.strokeStyle="rgba(0,243,255,.35)";
-
-    this.ctx.lineWidth=2;
-
-    this.ctx.arc(
-
-        x,
-        y,
-        40+Math.sin(Date.now()/200)*8,
-        0,
-        Math.PI*2
-
-    );
-
-    this.ctx.stroke();
-
-}
-
-/* ======================================
-    Motion Trail
-====================================== */
-
-drawTrail(hand){
-
-    if(!this.previous){
-
-        this.previous=hand;
-
-        return;
+        ctx.stroke();
 
     }
 
-    this.ctx.strokeStyle="rgba(0,243,255,.15)";
+    /* =====================================
+        Render
+    ===================================== */
 
-    this.ctx.lineWidth=2;
+    render() {
 
-    for(let i=0;i<hand.length;i++){
+        this.clear();
 
-        this.ctx.beginPath();
+        this.pulse();
 
-        this.ctx.moveTo(
+        for (const hand of this.landmarks) {
 
-            this.previous[i].x*this.canvas.width,
+            this.drawTrail(hand);
 
-            this.previous[i].y*this.canvas.height
+            this.drawConnections(hand);
 
-        );
+            this.drawPoints(hand);
 
-        this.ctx.lineTo(
+            this.drawFingerTips(hand);
 
-            hand[i].x*this.canvas.width,
+            this.drawEnergy(hand);
 
-            hand[i].y*this.canvas.height
-
-        );
-
-        this.ctx.stroke();
+        }
 
     }
 
-    this.previous=hand;
+    /* =====================================
+        Reset
+    ===================================== */
 
-}
+    reset() {
 
-/* ======================================
-    Pulse
-====================================== */
+        this.landmarks = [];
 
-pulse(){
+        this.previous = null;
 
-    this.nodeRadius=
+        this.clear();
 
-        5+
-
-        Math.sin(Date.now()/180);
-
-}
-
-/* ======================================
-    Render Upgrade
-====================================== */
-
-render(){
-
-    this.clear();
-
-    this.pulse();
-
-    this.landmarks.forEach(hand=>{
-
-        this.drawTrail(hand);
-
-        this.drawConnections(hand);
-
-        this.drawPoints(hand);
-
-        this.drawFingerTips(hand);
-
-        this.drawEnergy(hand);
-
-    });
+    }
 
 }
