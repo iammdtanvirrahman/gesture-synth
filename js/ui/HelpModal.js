@@ -7,41 +7,41 @@ export default class HelpModal {
 
     constructor() {
 
-        this.modal = document.getElementById("helpModal");
-        this.openBtn = document.getElementById("helpBtn");
-        this.closeBtn = document.getElementById("closeHelp");
+        const find = (...ids) => {
 
-        this.bindEvents();
+            for (const id of ids) {
 
-    }
+                const el = document.getElementById(id);
 
-    /* ==========================================
-       Events
-    ========================================== */
+                if (el) return el;
 
-    bindEvents() {
+            }
 
-        if (this.openBtn) {
+            return null;
 
-            this.openBtn.addEventListener("click", () => {
+        };
 
-                this.open();
+        this.modal = find("helpModal");
 
-            });
+        this.openBtn = find(
+            "helpBtn",
+            "helpButton"
+        );
 
-        }
+        this.closeBtn = find(
+            "closeHelp",
+            "helpClose"
+        );
 
-        if (this.closeBtn) {
+        /* -------------------------
+            Bind Once
+        ------------------------- */
 
-            this.closeBtn.addEventListener("click", () => {
+        this.onOpen = () => this.open();
 
-                this.close();
+        this.onClose = () => this.close();
 
-            });
-
-        }
-
-        window.addEventListener("keydown", (e) => {
+        this.onKeyDown = (e) => {
 
             if (e.key === "Escape") {
 
@@ -57,9 +57,9 @@ export default class HelpModal {
 
             }
 
-        });
+        };
 
-        window.addEventListener("click", (e) => {
+        this.onWindowClick = (e) => {
 
             if (e.target === this.modal) {
 
@@ -67,40 +67,76 @@ export default class HelpModal {
 
             }
 
-        });
+        };
+
+        this.bindEvents();
 
     }
 
     /* ==========================================
-       Controls
+        Events
+    ========================================== */
+
+    bindEvents() {
+
+        this.openBtn?.addEventListener(
+
+            "click",
+
+            this.onOpen
+
+        );
+
+        this.closeBtn?.addEventListener(
+
+            "click",
+
+            this.onClose
+
+        );
+
+        window.addEventListener(
+
+            "keydown",
+
+            this.onKeyDown
+
+        );
+
+        window.addEventListener(
+
+            "click",
+
+            this.onWindowClick
+
+        );
+
+    }
+
+    /* ==========================================
+        Controls
     ========================================== */
 
     open() {
 
-        if (!this.modal) return;
-
-        this.modal.classList.add("show");
+        this.modal?.classList.add("show");
 
     }
 
     close() {
 
-        if (!this.modal) return;
-
-        this.modal.classList.remove("show");
+        this.modal?.classList.remove("show");
 
     }
 
     toggle() {
 
-        if (!this.modal) return;
-
-        this.modal.classList.toggle("show");
+        this.modal?.classList.toggle("show");
 
     }
 
     /* ==========================================
-       Update Help
+        Version
     ========================================== */
 
     setVersion(version) {
@@ -115,19 +151,33 @@ export default class HelpModal {
 
     }
 
+    /* ==========================================
+        Gesture List
+    ========================================== */
+
     setGestureList(list = []) {
 
-        const container = document.getElementById("gestureList");
+        const container =
+
+            document.getElementById(
+
+                "gestureList"
+
+            );
 
         if (!container) return;
 
         container.innerHTML = "";
 
-        list.forEach(item => {
+        for (const item of list) {
 
-            const div = document.createElement("div");
+            const div =
 
-            div.className = "gesture-item";
+                document.createElement("div");
+
+            div.className =
+
+                "gesture-item";
 
             div.innerHTML = `
 
@@ -139,7 +189,47 @@ export default class HelpModal {
 
             container.appendChild(div);
 
-        });
+        }
+
+    }
+
+    /* ==========================================
+        Destroy
+    ========================================== */
+
+    destroy() {
+
+        this.openBtn?.removeEventListener(
+
+            "click",
+
+            this.onOpen
+
+        );
+
+        this.closeBtn?.removeEventListener(
+
+            "click",
+
+            this.onClose
+
+        );
+
+        window.removeEventListener(
+
+            "keydown",
+
+            this.onKeyDown
+
+        );
+
+        window.removeEventListener(
+
+            "click",
+
+            this.onWindowClick
+
+        );
 
     }
 
