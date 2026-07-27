@@ -1,64 +1,1672 @@
 /* ==========================================================
-   Gesture Synth AI
-   Master Stylesheet
+   Gesture Synth AI v4
+   style.css
+   Part 1
 ========================================================== */
 
 /* ==========================================================
-   Design System
+   RESET
 ========================================================== */
 
-@import "./variables.css";
+*,
+*::before,
+*::after{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    width:100%;
+    height:100vh;
+
+    overflow:hidden;
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        sans-serif;
+
+    background:#070b12;
+
+    color:#ffffff;
+
+    user-select:none;
+
+}
 
 /* ==========================================================
-   Reset
+   VARIABLES
 ========================================================== */
 
-@import "./reset.css";
+:root{
+
+    --bg:#070b12;
+
+    --bg2:#0f1724;
+
+    --panel:rgba(22,30,45,.55);
+
+    --panel-border:
+        rgba(255,255,255,.08);
+
+    --primary:#00F3FF;
+
+    --secondary:#00FFD5;
+
+    --gold:#E8A13D;
+
+    --success:#38ff8d;
+
+    --danger:#ff5377;
+
+    --text:#ffffff;
+
+    --muted:#aab4c6;
+
+    --radius:18px;
+
+    --blur:18px;
+
+    --transition:.25s;
+
+    --shadow:
+
+        0 0 18px rgba(0,243,255,.25);
+
+}
 
 /* ==========================================================
-   Layout
+   SCROLLBAR
 ========================================================== */
 
-@import "./layout.css";
+::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0b1220;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:var(--primary);
+
+    border-radius:100px;
+
+}
 
 /* ==========================================================
-   Landing
+   BACKGROUND
 ========================================================== */
 
-@import "./landing.css";
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+
+        radial-gradient(
+
+            circle at 15% 20%,
+
+            rgba(0,243,255,.12),
+
+            transparent 35%
+
+        ),
+
+        radial-gradient(
+
+            circle at 85% 15%,
+
+            rgba(0,255,213,.10),
+
+            transparent 30%
+
+        ),
+
+        radial-gradient(
+
+            circle at 50% 100%,
+
+            rgba(255,255,255,.05),
+
+            transparent 40%
+
+        );
+
+    pointer-events:none;
+
+}
+
+/* ==========================================================
+   COMMON GLASS
+========================================================== */
+
+.glass{
+
+    background:var(--panel);
+
+    border:1px solid var(--panel-border);
+
+    backdrop-filter:
+
+        blur(var(--blur));
+
+    -webkit-backdrop-filter:
+
+        blur(var(--blur));
+
+    border-radius:var(--radius);
+
+    box-shadow:var(--shadow);
+
+}
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+button{
+
+    cursor:pointer;
+
+    border:none;
+
+    outline:none;
+
+    color:white;
+
+    transition:.25s;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+button:active{
+
+    transform:scale(.97);
+
+}
+
+/* ==========================================================
+   LINKS
+========================================================== */
+
+a{
+
+    color:inherit;
+
+    text-decoration:none;
+
+}
+
+/* ==========================================================
+   HIDDEN
+========================================================== */
+
+.hidden{
+
+    display:none !important;
+
+}
+/* ==========================================================
+   Gesture Synth AI v4
+   style.css
+   Part 2
+   Landing + Loading + Stage + Camera
+========================================================== */
+
+/* ==========================================================
+   LANDING SCREEN
+========================================================== */
+
+#landingScreen{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:#070b12;
+
+    z-index:10000;
+
+}
+
+#landingCard{
+
+    width:min(92%,650px);
+
+    padding:50px;
+
+    text-align:center;
+
+    border-radius:24px;
+
+    background:rgba(18,25,40,.78);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(24px);
+
+    box-shadow:
+
+        0 0 40px rgba(0,243,255,.18);
+
+}
+
+#landingCard h1{
+
+    font-size:3rem;
+
+    color:var(--primary);
+
+    margin-bottom:15px;
+
+}
+
+#landingCard p{
+
+    color:var(--muted);
+
+    line-height:1.7;
+
+    margin-bottom:35px;
+
+}
+
+#startExperience{
+
+    padding:15px 40px;
+
+    border-radius:50px;
+
+    background:linear-gradient(
+
+        135deg,
+
+        var(--primary),
+
+        var(--secondary)
+
+    );
+
+    color:#061018;
+
+    font-weight:700;
+
+    font-size:1rem;
+
+}
+
+#startExperience:hover{
+
+    box-shadow:
+
+        0 0 25px rgba(0,243,255,.45);
+
+}
+
+/* ==========================================================
+   LOADING
+========================================================== */
+
+#loadingScreen{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:#070b12;
+
+    z-index:9999;
+
+}
+
+.loading-box{
+
+    width:min(92%,550px);
+
+    text-align:center;
+
+}
+
+.loading-box h2{
+
+    margin-bottom:25px;
+
+    color:var(--primary);
+
+}
+
+#loadingStatus{
+
+    color:var(--muted);
+
+    margin-bottom:20px;
+
+}
+
+.loading-bar{
+
+    width:100%;
+
+    height:10px;
+
+    border-radius:100px;
+
+    overflow:hidden;
+
+    background:#1a2435;
+
+}
+
+#loadingFill{
+
+    width:0%;
+
+    height:100%;
+
+    background:linear-gradient(
+
+        90deg,
+
+        var(--primary),
+
+        var(--secondary)
+
+    );
+
+    transition:width .35s ease;
+
+}
+
+#loadingPercent{
+
+    display:block;
+
+    margin-top:15px;
+
+    color:white;
+
+    font-weight:600;
+
+}
+
+/* ==========================================================
+   STAGE
+========================================================== */
+
+#stage{
+
+    position:fixed;
+
+    inset:0;
+
+    overflow:hidden;
+
+    display:none;
+
+}
+
+/* ==========================================================
+   CAMERA
+========================================================== */
+
+#video{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+    transform:scaleX(-1);
+
+    z-index:1;
+
+}
+
+/* ==========================================================
+   MAIN CANVAS
+========================================================== */
+
+#canvas{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    pointer-events:none;
+
+    transform:scaleX(-1);
+
+    z-index:2;
+
+}
+
+/* ==========================================================
+   VOLUME CANVAS
+========================================================== */
+
+#volumeCanvas{
+
+    position:absolute;
+
+    left:25px;
+
+    bottom:25px;
+
+    width:260px;
+
+    height:80px;
+
+    z-index:30;
+
+    border-radius:16px;
+
+    background:rgba(12,20,32,.45);
+
+    backdrop-filter:blur(12px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+/* ==========================================================
+   Gesture Synth AI v4
+   style.css
+   Part 3
+   HUD + Panels
+========================================================== */
+
+/* ==========================================================
+   TOP BAR
+========================================================== */
+
+#topBar{
+
+    position:absolute;
+
+    top:20px;
+
+    left:20px;
+
+    right:20px;
+
+    height:70px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 22px;
+
+    z-index:50;
+
+    background:rgba(18,25,40,.55);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:18px;
+
+    box-shadow:0 0 18px rgba(0,243,255,.15);
+
+}
+
+#topBar h2{
+
+    color:var(--primary);
+
+    font-size:1.5rem;
+
+    font-weight:700;
+
+}
+
+/* ==========================================================
+   HELP BUTTON
+========================================================== */
+
+#helpBtn{
+
+    padding:10px 20px;
+
+    border-radius:12px;
+
+    background:linear-gradient(
+
+        135deg,
+
+        var(--primary),
+
+        var(--secondary)
+
+    );
+
+    color:#041017;
+
+    font-weight:700;
+
+}
 
 /* ==========================================================
    HUD
 ========================================================== */
 
-@import "./hud.css";
+#hud{
+
+    position:absolute;
+
+    top:110px;
+
+    left:20px;
+
+    width:320px;
+
+    z-index:40;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+}
+
+.hud-card{
+
+    background:rgba(18,25,40,.58);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:18px;
+
+    backdrop-filter:blur(18px);
+
+    padding:18px;
+
+    box-shadow:0 0 16px rgba(0,243,255,.15);
+
+}
+
+.hud-title{
+
+    color:var(--primary);
+
+    font-size:.95rem;
+
+    margin-bottom:14px;
+
+    font-weight:700;
+
+}
 
 /* ==========================================================
-   Controls
+   ROW
 ========================================================== */
 
-@import "./controls.css";
+.hud-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin:10px 0;
+
+    color:white;
+
+}
+
+.hud-row span:first-child{
+
+    color:var(--muted);
+
+}
+
+.hud-value{
+
+    color:var(--primary);
+
+    font-weight:700;
+
+}
 
 /* ==========================================================
-   Volume Meter
+   CHORD DISPLAY
 ========================================================== */
 
-@import "./volume.css";
+#chordDisplay{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    min-height:80px;
+
+    font-size:2rem;
+
+    font-weight:800;
+
+    color:var(--gold);
+
+    text-shadow:
+
+        0 0 18px rgba(232,161,61,.45);
+
+}
 
 /* ==========================================================
-   Modal
+   AI STATUS
 ========================================================== */
 
-@import "./modal.css";
+#aiStatus{
+
+    color:var(--success);
+
+    font-weight:700;
+
+}
+
+#aiStatus.success{
+
+    color:var(--success);
+
+}
+
+#aiStatus.danger{
+
+    color:var(--danger);
+
+}
 
 /* ==========================================================
+   VALUES
+========================================================== */
+
+#fps,
+#hands,
+#confidence,
+#filterValue,
+#volumeValue,
+#currentKey{
+
+    color:var(--primary);
+
+    font-weight:700;
+
+}
+
+/* ==========================================================
+   QUALITY
+========================================================== */
+
+#qualityDisplay{
+
+    color:var(--gold);
+
+    font-weight:600;
+
+}
+
+/* ==========================================================
+   CURRENT KEY
+========================================================== */
+
+#currentKey{
+
+    font-size:1.15rem;
+
+}
+/* ==========================================================
+   Gesture Synth AI v4
+   style.css
+   Part 4
+   Help Modal + Footer + Animations
+========================================================== */
+
+/* ==========================================================
+   HELP MODAL
+========================================================== */
+
+#helpModal{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.65);
+
+    backdrop-filter:blur(8px);
+
+    opacity:0;
+
+    visibility:hidden;
+
+    transition:.3s;
+
+    z-index:999;
+
+}
+
+#helpModal.show{
+
+    opacity:1;
+
+    visibility:visible;
+
+}
+
+.modal-content{
+
+    width:min(90%,700px);
+
+    max-height:85vh;
+
+    overflow-y:auto;
+
+    padding:35px;
+
+    border-radius:22px;
+
+    background:rgba(18,25,40,.92);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:0 0 35px rgba(0,243,255,.22);
+
+    animation:popup .3s ease;
+
+}
+
+@keyframes popup{
+
+    from{
+
+        transform:scale(.9);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.modal-content h2{
+
+    color:var(--primary);
+
+    margin-bottom:20px;
+
+}
+
+.modal-content h3{
+
+    margin-top:25px;
+
+    margin-bottom:10px;
+
+    color:var(--gold);
+
+}
+
+.modal-content p,
+
+.modal-content li{
+
+    color:var(--muted);
+
+    line-height:1.7;
+
+}
+
+.modal-content ul{
+
+    padding-left:20px;
+
+}
+
+#closeHelp{
+
+    margin-top:25px;
+
+    padding:12px 28px;
+
+    border-radius:12px;
+
+    background:linear-gradient(
+
+        135deg,
+
+        var(--primary),
+
+        var(--secondary)
+
+    );
+
+    color:#051018;
+
+    font-weight:700;
+
+}
+
+/* ==========================================================
+   GESTURE LIST
+========================================================== */
+
+#gestureList{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+    margin-top:20px;
+
+}
+
+.gesture-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:14px 18px;
+
+    border-radius:14px;
+
+    background:rgba(255,255,255,.04);
+
+}
+
+.gesture-item strong{
+
+    color:white;
+
+}
+
+.gesture-item span{
+
+    color:var(--primary);
+
+}
+
+/* ==========================================================
+   FOOTER
+========================================================== */
+
+footer{
+
+    position:absolute;
+
+    bottom:12px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    color:rgba(255,255,255,.55);
+
+    font-size:.82rem;
+
+    z-index:60;
+
+}
+
+/* ==========================================================
+   GLOW EFFECT
+========================================================== */
+
+.glow{
+
+    box-shadow:
+
+        0 0 20px rgba(0,243,255,.35),
+
+        0 0 40px rgba(0,243,255,.15);
+
+}
+
+/* ==========================================================
+   FLOAT
+========================================================== */
+
+.float{
+
+    animation:float 4s ease-in-out infinite;
+
+}
+
+@keyframes float{
+
+    0%{
+
+        transform:translateY(0);
+
+    }
+
+    50%{
+
+        transform:translateY(-6px);
+
+    }
+
+    100%{
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================================================
+   FADE
+========================================================== */
+
+.fade-in{
+
+    animation:fade .5s ease;
+
+}
+
+@keyframes fade{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+/* ==========================================================
+   Gesture Synth AI v4
+   style.css
+   Part 5
+   Responsive + Utilities + Final Polish
+========================================================== */
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:1200px){
+
+    #hud{
+
+        width:280px;
+
+    }
+
+    #volumeCanvas{
+
+        width:220px;
+
+        height:70px;
+
+    }
+
+}
+
+@media (max-width:900px){
+
+    #topBar{
+
+        height:auto;
+
+        padding:16px;
+
+        flex-direction:column;
+
+        gap:12px;
+
+    }
+
+    #hud{
+
+        top:130px;
+
+        width:260px;
+
+    }
+
+    #landingCard{
+
+        padding:35px;
+
+    }
+
+    #landingCard h1{
+
+        font-size:2.2rem;
+
+    }
+
+}
+
+@media (max-width:768px){
+
+    #hud{
+
+        position:absolute;
+
+        left:12px;
+
+        right:12px;
+
+        width:auto;
+
+    }
+
+    #volumeCanvas{
+
+        left:12px;
+
+        bottom:12px;
+
+        width:180px;
+
+        height:60px;
+
+    }
+
+    #landingCard{
+
+        width:92%;
+
+        padding:28px;
+
+    }
+
+    #landingCard h1{
+
+        font-size:2rem;
+
+    }
+
+    .modal-content{
+
+        width:94%;
+
+        padding:24px;
+
+    }
+
+}
+
+@media (max-width:480px){
+
+    #topBar{
+
+        left:10px;
+
+        right:10px;
+
+        top:10px;
+
+    }
+
+    #hud{
+
+        top:110px;
+
+    }
+
+    .hud-card{
+
+        padding:14px;
+
+    }
+
+    #chordDisplay{
+
+        font-size:1.5rem;
+
+    }
+
+    #volumeCanvas{
+
+        width:150px;
+
+        height:55px;
+
+    }
+
+}
+
+/* ==========================================================
+   UTILITIES
+========================================================== */
+
+.text-center{
+
+    text-align:center;
+
+}
+
+.text-primary{
+
+    color:var(--primary);
+
+}
+
+.text-success{
+
+    color:var(--success);
+
+}
+
+.text-danger{
+
+    color:var(--danger);
+
+}
+
+.round{
+
+    border-radius:999px;
+
+}
+
+.shadow{
+
+    box-shadow:0 0 20px rgba(0,243,255,.25);
+
+}
+
+/* ==========================================================
+   CANVAS
+========================================================== */
+
+canvas{
+
+    image-rendering:auto;
+
+}
+
+/* ==========================================================
+   VIDEO
+========================================================== */
+
+video{
+
+    background:black;
+
+}
+
+/* ==========================================================
+   SELECTION
+========================================================== */
+
+::selection{
+
+    background:var(--primary);
+
+    color:#071018;
+
+}
+
+/* ==========================================================
+   END
+========================================================== */
+/* ==========================================================
+   Gesture Synth AI v4
+   style.css
+   Part 6
+   Premium Effects
+========================================================== */
+
+/* ==========================================
+   Loading Spinner
+========================================== */
+
+.spinner{
+
+    width:70px;
+
+    height:70px;
+
+    margin:25px auto;
+
+    border:5px solid rgba(255,255,255,.08);
+
+    border-top:5px solid var(--primary);
+
+    border-radius:50%;
+
+    animation:spin 1s linear infinite;
+
+}
+
+@keyframes spin{
+
+    from{
+
+        transform:rotate(0deg);
+
+    }
+
+    to{
+
+        transform:rotate(360deg);
+
+    }
+
+}
+
+/* ==========================================
+   Neon Pulse
+========================================== */
+
+.neon{
+
+    animation:neonPulse 2s infinite alternate;
+
+}
+
+@keyframes neonPulse{
+
+    from{
+
+        text-shadow:
+
+            0 0 5px var(--primary),
+
+            0 0 12px var(--primary),
+
+            0 0 20px var(--primary);
+
+    }
+
+    to{
+
+        text-shadow:
+
+            0 0 10px var(--primary),
+
+            0 0 25px var(--primary),
+
+            0 0 45px var(--primary);
+
+    }
+
+}
+
+/* ==========================================
+   Glass Hover
+========================================== */
+
+.glass:hover{
+
+    transform:translateY(-2px);
+
+    transition:.25s;
+
+    box-shadow:
+
+        0 0 20px rgba(0,243,255,.30),
+
+        0 0 40px rgba(0,243,255,.15);
+
+}
+
+/* ==========================================
+   HUD Animation
+========================================== */
+
+.hud-card{
+
+    animation:hudFade .5s ease;
+
+}
+
+@keyframes hudFade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(15px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================================
+   Status Colors
+========================================== */
+
+.success{
+
+    color:var(--success);
+
+}
+
+.warning{
+
+    color:var(--gold);
+
+}
+
+.error{
+
+    color:var(--danger);
+
+}
+
+/* ==========================================
+   Button Glow
+========================================== */
+
+button:hover{
+
+    box-shadow:
+
+        0 0 18px rgba(0,243,255,.45);
+
+}
+
+/* ==========================================
+   Canvas Fade
+========================================== */
+
+#canvas{
+
+    animation:canvasFade .6s ease;
+
+}
+
+@keyframes canvasFade{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+/* ==========================================
+   Volume Canvas
+========================================== */
+
+#volumeCanvas{
+
+    transition:.25s;
+
+}
+
+#volumeCanvas:hover{
+
+    transform:scale(1.03);
+
+}
+
+/* ==========================================
    Footer
-========================================================== */
+========================================== */
 
-@import "./footer.css";
+footer:hover{
 
+    color:white;
+
+    transition:.25s;
+
+}
 /* ==========================================================
-   Responsive
+   Gesture Synth AI v4
+   style.css
+   Part 7 (FINAL)
 ========================================================== */
 
-@import "./responsive.css";
+/* ==========================================
+   Focus
+========================================== */
+
+button:focus,
+input:focus,
+select:focus{
+
+    outline:2px solid var(--primary);
+
+    outline-offset:3px;
+
+}
+
+/* ==========================================
+   Disable Image Drag
+========================================== */
+
+img,
+video,
+canvas{
+
+    -webkit-user-drag:none;
+
+    user-select:none;
+
+}
+
+/* ==========================================
+   Smooth Transition
+========================================== */
+
+*{
+
+    transition:
+
+        background-color .25s,
+
+        color .25s,
+
+        border-color .25s,
+
+        opacity .25s;
+
+}
+
+/* ==========================================
+   Prevent Text Overflow
+========================================== */
+
+h1,
+h2,
+h3,
+p,
+span,
+div{
+
+    word-wrap:break-word;
+
+}
+
+/* ==========================================
+   Selection
+========================================== */
+
+::selection{
+
+    background:var(--primary);
+
+    color:#081018;
+
+}
+
+/* ==========================================
+   Accessibility
+========================================== */
+
+@media (prefers-reduced-motion:reduce){
+
+    *{
+
+        animation:none !important;
+
+        transition:none !important;
+
+        scroll-behavior:auto !important;
+
+    }
+
+}
+
+/* ==========================================
+   Print
+========================================== */
+
+@media print{
+
+    body{
+
+        display:none;
+
+    }
+
+}
+
+/* ==========================================
+   Browser Fixes
+========================================== */
+
+canvas{
+
+    display:block;
+
+}
+
+video{
+
+    display:block;
+
+}
+
+button{
+
+    font-family:inherit;
+
+}
+
+/* ==========================================
+   App Ready
+========================================== */
+
+#app{
+
+    width:100%;
+
+    height:100%;
+
+}
+
+/* ==========================================
+   Version Badge
+========================================== */
+
+.version{
+
+    color:rgba(255,255,255,.45);
+
+    font-size:.8rem;
+
+}
+
+/* ==========================================
+   END OF FILE
+========================================== */
+
+/*
+
+ Gesture Synth AI
+ Version : 4.0
+
+ UI : COMPLETE
+ Responsive : COMPLETE
+ HUD : COMPLETE
+ Modal : COMPLETE
+ Loading : COMPLETE
+ Camera : COMPLETE
+ Glass UI : COMPLETE
+
+*/
