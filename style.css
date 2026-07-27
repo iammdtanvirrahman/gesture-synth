@@ -36,11 +36,6 @@ html, body {
   inset: 0;
   width: 100%;
   height: 100%;
-  transition: filter 0.3s ease;
-}
-
-#overlay.dimmed {
-  filter: grayscale(0.8) brightness(0.4);
 }
 
 /* Glassmorphism HUD Panels */
@@ -237,43 +232,3 @@ select {
 }
 
 .help-content h2, .help-content h3 { color: var(--accent-cyan); }
-
-/* Start Overlay */
-#startOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(8, 11, 18, 0.92);
-  backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  cursor: pointer;
-  z-index: 200;
-}
-
-.start-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-cyan), #0066ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  color: #fff;
-  box-shadow: 0 0 30px var(--accent-glow);
-  transition: transform 0.2s;
-}
-
-#startOverlay:hover .start-circle {
-  transform: scale(1.1);
-}
-
-.start-text {
-  color: #fff;
-  font-family: var(--font-code);
-  font-size: 15px;
-  letter-spacing: 2px;
-}
