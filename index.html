@@ -3,704 +3,554 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1.0">
 
-    <meta
-        name="description"
-        content="Gesture Synth AI - Play realistic musical chords using AI hand tracking directly in your browser.">
+<title>
 
-    <meta
-        name="keywords"
-        content="Gesture Synth, AI Music, MediaPipe, Web Audio API, Air Guitar, Hand Tracking">
+Gesture Synth AI
 
-    <meta
-        name="author"
-        content="AtomicTanvir">
+</title>
 
-    <meta
-        name="theme-color"
-        content="#080b12">
+<meta
+name="theme-color"
+content="#080b12">
 
-    <meta
-        property="og:title"
-        content="Gesture Synth AI">
+<meta
+name="description"
+content="Gesture Synth AI - AI Hand Tracking Musical Instrument">
 
-    <meta
-        property="og:description"
-        content="Play music with nothing but your hands.">
+<link
+rel="preconnect"
+href="https://fonts.googleapis.com">
 
-    <meta
-        property="og:type"
-        content="website">
+<link
+rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
 
-    <meta
-        property="og:image"
-        content="assets/images/banner.png">
+<link
+href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+rel="stylesheet">
 
-    <title>
+<link
+rel="stylesheet"
+href="./css/style.css">
 
-        Gesture Synth AI • Premium Edition
+<!-- ===========================
+MediaPipe
+=========================== -->
 
-    </title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
-    <link
-        rel="icon"
-        href="./assets/icons/favicon.ico">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-    <!-- Google Fonts -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com">
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap"
-        rel="stylesheet">
-
-    <!-- Main CSS -->
-
-    <link
-        rel="stylesheet"
-        href="./css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 </head>
 
 <body>
 
-<!-- =======================================================
-                    LANDING SCREEN
-======================================================= -->
+<!-- =====================================
+Landing Screen
+===================================== -->
 
 <div id="landingScreen">
 
-    <div class="landing-background">
+<div class="landingCard">
 
-        <div class="gradient-one"></div>
+<h1>
 
-        <div class="gradient-two"></div>
+Gesture Synth AI
 
-        <div class="grid-overlay"></div>
+</h1>
 
-        <div class="noise-overlay"></div>
+<p>
 
-    </div>
+Play music using only your hands.
 
-    <div class="landing-content">
+</p>
 
-        <div class="logo-circle">
+<button id="startExperience">
 
-            🎸
+Start Experience
 
-        </div>
-
-        <h1>
-
-            Gesture Synth AI
-
-        </h1>
-
-        <p>
-
-            Play realistic musical chords using AI hand tracking,
-            Web Audio API and MediaPipe —
-            directly inside your browser.
-
-        </p>
-
-        <button id="startExperience">
-
-            Start Experience
-
-        </button>
-
-        <div class="landing-features">
-
-            <span>
-
-                AI Tracking
-
-            </span>
-
-            <span>
-
-                Web Audio
-
-            </span>
-
-            <span>
-
-                Ultra Low Latency
-
-            </span>
-
-            <span>
-
-                GitHub Pages Ready
-
-            </span>
-
-        </div>
-
-    </div>
+</button>
 
 </div>
 
-<!-- =======================================================
-                    LOADING SCREEN
-======================================================= -->
+</div>
+
+<!-- =====================================
+Loading Screen
+===================================== -->
 
 <div
-    id="loadingScreen"
-    class="hidden">
+id="loadingScreen"
+class="hidden">
 
-    <div class="loading-card">
+<div class="loaderCard">
+
+<h2>
+
+Initializing...
+
+</h2>
+
+<div class="progress">
+
+<div id="loadingFill">
+
+</div>
+
+</div>
+
+<div id="loadingPercent">
+
+0%
+
+</div>
+
+<p id="loadingStatus">
+
+Preparing Camera...
+
+</p>
+
+</div>
+
+</div>
+
+<!-- =====================================
+Main Stage
+===================================== -->
+
+<div
+id="stage"
+style="display:none;">
+    <!-- =====================================
+Main Workspace
+===================================== -->
+
+<div id="workspace">
+
+    <!-- ==========================
+        Camera Layer
+    =========================== -->
+
+    <div id="cameraContainer">
+
+        <video
+            id="video"
+            autoplay
+            playsinline
+            muted
+        ></video>
+
+        <canvas
+            id="canvas"
+            width="1280"
+            height="720"
+        ></canvas>
+
+    </div>
+
+    <!-- ==========================
+        Right HUD
+    =========================== -->
+
+    <aside id="hudPanel">
+
+        <div class="hudCard">
+
+            <h3>
+
+                System
+
+            </h3>
+
+            <div class="hudRow">
+
+                <span>FPS</span>
+
+                <span id="fps">0</span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Hands</span>
+
+                <span id="hands">0</span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Status</span>
+
+                <span id="aiStatus">
+
+                    Initializing
+
+                </span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Quality</span>
+
+                <span id="qualityDisplay">
+
+                    --
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="hudCard">
+
+            <h3>
+
+                Music
+
+            </h3>
+
+            <div
+                id="chordDisplay"
+                class="bigChord">
+
+                --
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Confidence</span>
+
+                <span id="confidence">
+
+                    0%
+
+                </span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Filter</span>
+
+                <span id="filterValue">
+
+                    0 Hz
+
+                </span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Volume</span>
+
+                <span id="volumeValue">
+
+                    0%
+
+                </span>
+
+            </div>
+
+            <div class="hudRow">
+
+                <span>Key</span>
+
+                <span id="currentKey">
+
+                    C
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</div>
+
+<!-- ==========================
+Volume Meter
+========================== -->
+
+<div id="bottomBar">
+
+    <canvas
+        id="volumeCanvas"
+        width="420"
+        height="80">
+    </canvas>
+
+</div>
+<!-- =====================================
+Top Controls
+===================================== -->
+
+<header id="topBar">
+
+    <div class="logo">
 
         <h2>
 
-            Initializing AI Engine...
+            Gesture Synth AI
 
         </h2>
 
-        <div class="loading-progress">
+    </div>
 
-            <div id="loadingFill"></div>
+    <div class="controls">
 
-        </div>
+        <button id="helpBtn">
 
-        <div id="loadingPercent">
+            Help
 
-            0%
-
-        </div>
-
-        <p id="loadingStatus">
-
-            Preparing Camera...
-
-        </p>
+        </button>
 
     </div>
 
-</div>
+</header>
 
-<!-- =======================================================
-                    MAIN APPLICATION
-======================================================= -->
+<!-- =====================================
+Help Modal
+===================================== -->
 
-<div
-    id="stage"
-    style="display:none;">
+<div id="helpModal" class="modal">
 
-    <!-- Continue in Part 2 -->
-      <!-- =======================================================
-                        TOP LEFT HUD
-    ======================================================== -->
+    <div class="modalContent">
 
-    <div class="hud-top-left">
-
-        <div class="hud-metric">
-
-            <span class="metric-label">
-
-                FPS
-
-            </span>
-
-            <span
-                id="val-fps"
-                class="metric-value">
-
-                0
-
-            </span>
-
-        </div>
-
-        <div class="hud-metric">
-
-            <span class="metric-label">
-
-                Hands
-
-            </span>
-
-            <span
-                id="val-hands"
-                class="metric-value">
-
-                0 Tracked
-
-            </span>
-
-        </div>
-
-        <div class="hud-metric">
-
-            <span class="metric-label">
-
-                AI
-
-            </span>
-
-            <span
-                id="aiStatus"
-                class="metric-value success">
-
-                READY
-
-            </span>
-
-        </div>
-
-    </div>
-
-    <!-- =======================================================
-                        TOP RIGHT CONTROLS
-    ======================================================== -->
-
-    <div class="controls-overlay">
-
-        <div class="control-group">
-
-            <label for="keySelect">
-
-                KEY
-
-            </label>
-
-            <select id="keySelect">
-
-                <option value="220.00" data-note="A" selected>A Major / F#m</option>
-                <option value="233.08" data-note="Bb">A#/Bb Major</option>
-                <option value="246.94" data-note="B">B Major</option>
-                <option value="261.63" data-note="C">C Major / Am</option>
-                <option value="277.18" data-note="Db">C#/Db Major</option>
-                <option value="293.66" data-note="D">D Major</option>
-                <option value="311.13" data-note="Eb">D#/Eb Major</option>
-                <option value="329.63" data-note="E">E Major</option>
-                <option value="349.23" data-note="F">F Major</option>
-                <option value="369.99" data-note="Gb">F#/Gb Major</option>
-                <option value="392.00" data-note="G">G Major</option>
-                <option value="415.30" data-note="Ab">G#/Ab Major</option>
-
-            </select>
-
-        </div>
-
-        <div class="control-group">
-
-            <label for="toneSelect">
-
-                SYNTH
-
-            </label>
-
-            <select id="toneSelect">
-
-                <option value="triangle" selected>Warm Synth</option>
-                <option value="sawtooth">Bright Synth</option>
-                <option value="square">Retro Square</option>
-                <option value="sine">Pure Sine</option>
-
-            </select>
-
-        </div>
-
-        <div
-            id="distortionDisplay"
-            class="hud-badge">
-
-            Filter : 0%
-
-        </div>
-
-    </div>
-
-    <!-- =======================================================
-                        CAMERA
-    ======================================================== -->
-
-    <video
-        id="webcam"
-        autoplay
-        muted
-        playsinline>
-
-    </video>
-
-    <!-- =======================================================
-                        CANVAS
-    ======================================================== -->
-
-    <canvas id="overlay"></canvas>
-
-    <!-- =======================================================
-                        VOLUME METER
-    ======================================================== -->
-
-    <div id="volumeMeter">
-
-        <div class="vol-bar" data-index="7"></div>
-        <div class="vol-bar" data-index="6"></div>
-        <div class="vol-bar" data-index="5"></div>
-        <div class="vol-bar" data-index="4"></div>
-        <div class="vol-bar" data-index="3"></div>
-        <div class="vol-bar" data-index="2"></div>
-        <div class="vol-bar" data-index="1"></div>
-        <div class="vol-bar" data-index="0"></div>
-
-    </div>
-
-    <!-- =======================================================
-                        CHORD DISPLAY
-    ======================================================== -->
-
-    <div class="hud-bottom-center">
-
-        <div id="chordDisplay">
-
-            --
-
-        </div>
-
-        <div id="qualityDisplay">
-
-            Raise both hands to start playing
-
-        </div>
-
-    </div>
-
-    <!-- =======================================================
-                        STATUS CARD
-    ======================================================== -->
-
-    <div id="statusCard">
-
-        <div class="status-title">
-
-            SYSTEM STATUS
-
-        </div>
-
-        <div class="status-row">
-
-            <span>📷 Camera</span>
-
-            <span id="cameraStatus">
-
-                Waiting...
-
-            </span>
-
-        </div>
-
-        <div class="status-row">
-
-            <span>✋ Tracking</span>
-
-            <span id="trackingStatus">
-
-                Idle
-
-            </span>
-
-        </div>
-
-        <div class="status-row">
-
-            <span>🎵 Audio</span>
-
-            <span id="audioStatus">
-
-                Locked
-
-            </span>
-
-        </div>
-
-        <div class="status-row">
-
-            <span>⚡ Performance</span>
-
-            <span id="performanceStatus">
-
-                Excellent
-
-            </span>
-
-        </div>
-
-    </div>
-
-    <!-- =======================================================
-                        ACTION BUTTONS
-    ======================================================== -->
-
-    <button id="helpButton" title="Help">
-
-        ?
-
-    </button>
-
-    <button id="fullscreenButton" title="Fullscreen">
-
-        ⛶
-
-    </button>
-
-    <button id="captureButton" title="Screenshot">
-
-        📸
-
-    </button>
-
-    <button id="settingsButton" title="Settings">
-
-        ⚙
-
-    </button>
-
-    <!-- Continue in Part 3 -->
-      <!-- =======================================================
-                        HELP MODAL
-    ======================================================== -->
-
-    <div id="helpModal" class="hidden">
-
-        <div class="help-content">
-
-            <button id="closeHelp">✕</button>
-
-            <h2>Gesture Synth AI Guide</h2>
-
-            <h3>✋ Left Hand</h3>
-
-            <ul>
-                <li>1 Finger → Scale I</li>
-                <li>2 Fingers → Scale II</li>
-                <li>3 Fingers → Scale III</li>
-                <li>4 Fingers → Scale IV</li>
-                <li>5 Fingers → Scale V</li>
-                <li>Index + Pinky → Scale VI</li>
-                <li>Index + Pinky + Thumb → Scale VII</li>
-            </ul>
-
-            <h3>🤚 Right Hand</h3>
-
-            <ul>
-                <li>Raise Hand → Increase Volume</li>
-                <li>Lower Hand → Decrease Volume</li>
-                <li>Tilt → Filter Sweep</li>
-                <li>Thumb → Octave Down</li>
-            </ul>
-
-            <h3>Tips</h3>
-
-            <p>
-
-                Keep both hands visible.
-                Use good lighting for better tracking.
-
-            </p>
-
-        </div>
-
-    </div>
-
-    <!-- =======================================================
-                        SETTINGS PANEL
-    ======================================================== -->
-
-    <div id="settingsPanel" class="hidden">
-
-        <div class="settings-card">
+        <div class="modalHeader">
 
             <h2>
 
-                Settings
+                Gesture Guide
 
             </h2>
 
-            <div class="setting-item">
+            <button id="closeHelp">
 
-                <label>
-
-                    Particle Effects
-
-                </label>
-
-                <input
-                    type="checkbox"
-                    checked
-                    id="toggleParticles">
-
-            </div>
-
-            <div class="setting-item">
-
-                <label>
-
-                    Energy Waves
-
-                </label>
-
-                <input
-                    type="checkbox"
-                    checked
-                    id="toggleEnergy">
-
-            </div>
-
-            <div class="setting-item">
-
-                <label>
-
-                    Landmark Points
-
-                </label>
-
-                <input
-                    type="checkbox"
-                    checked
-                    id="toggleLandmarks">
-
-            </div>
-
-            <button id="closeSettings">
-
-                Close
+                ✕
 
             </button>
 
         </div>
 
-    </div>
+        <div class="modalBody">
 
-    <!-- =======================================================
-                        TOAST
-    ======================================================== -->
+            <div id="gestureList">
 
-    <div id="toastContainer"></div>
+                <div class="gesture-item">
 
-    <!-- =======================================================
-                        PARTICLE BACKGROUND
-    ======================================================== -->
+                    <strong>Fist</strong>
 
-    <div id="particleBackground">
+                    <span>Mute</span>
 
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
+                </div>
 
-    </div>
+                <div class="gesture-item">
 
-    <!-- =======================================================
-                        FOOTER
-    ======================================================== -->
+                    <strong>One Finger</strong>
 
-    <footer id="githubFooter">
+                    <span>Major</span>
 
-        <div>
+                </div>
 
-            Gesture Synth AI
+                <div class="gesture-item">
+
+                    <strong>Peace</strong>
+
+                    <span>Minor</span>
+
+                </div>
+
+                <div class="gesture-item">
+
+                    <strong>Rock</strong>
+
+                    <span>7th</span>
+
+                </div>
+
+                <div class="gesture-item">
+
+                    <strong>Open Palm</strong>
+
+                    <span>Maj7</span>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <div>
+        <div class="modalFooter">
 
-            Powered by MediaPipe · Web Audio API · AtomicTanvir
+            <span>
+
+                Version
+
+                <strong id="version">
+
+                    4.0
+
+                </strong>
+
+            </span>
 
         </div>
 
-    </footer>
+    </div>
 
 </div>
 
-<!-- =======================================================
-                    STARTUP SCRIPT
-======================================================= -->
+<!-- =====================================
+Footer
+===================================== -->
+
+<footer id="footer">
+
+    <span>
+
+        Gesture Synth AI
+
+    </span>
+
+    <span>
+
+        Built with MediaPipe + Web Audio API
+
+    </span>
+
+</footer>
+<!-- =====================================
+Startup Logic
+===================================== -->
 
 <script>
 
-const startBtn = document.getElementById("startExperience");
 const landing = document.getElementById("landingScreen");
 const loading = document.getElementById("loadingScreen");
 const stage = document.getElementById("stage");
 
-startBtn.addEventListener("click", () => {
+const startBtn = document.getElementById("startExperience");
+
+startBtn.addEventListener("click", async () => {
 
     landing.style.display = "none";
 
     loading.classList.remove("hidden");
 
-    const fill = document.getElementById("loadingFill");
-    const percent = document.getElementById("loadingPercent");
-    const status = document.getElementById("loadingStatus");
+    const fill =
+        document.getElementById("loadingFill");
 
-    const messages = [
+    const percent =
+        document.getElementById("loadingPercent");
 
+    const status =
+        document.getElementById("loadingStatus");
+
+    const steps = [
+
+        "Checking Browser...",
         "Preparing Camera...",
         "Loading MediaPipe...",
         "Initializing Audio...",
-        "Creating AI Engine...",
-        "Optimizing Graphics...",
-        "Ready!"
+        "Preparing Interface...",
+        "Starting Gesture Synth AI..."
 
     ];
 
-    let progress = 0;
-    let index = 0;
+    for (let i = 0; i < steps.length; i++) {
 
-    const timer = setInterval(() => {
+        status.textContent = steps[i];
 
-        progress++;
+        const p = Math.round(
 
-        fill.style.width = progress + "%";
-        percent.textContent = progress + "%";
+            ((i + 1) / steps.length) * 100
 
-        if (progress % 20 === 0 && index < messages.length - 1) {
+        );
 
-            index++;
-            status.textContent = messages[index];
+        fill.style.width = p + "%";
+
+        percent.textContent = p + "%";
+
+        await new Promise(resolve =>
+
+            setTimeout(resolve, 350)
+
+        );
+
+    }
+
+    /* ==================================
+       Unlock Audio
+    =================================== */
+
+    try {
+
+        const AudioContext =
+
+            window.AudioContext ||
+
+            window.webkitAudioContext;
+
+        if (AudioContext) {
+
+            const ctx = new AudioContext();
+
+            if (ctx.state === "suspended") {
+
+                await ctx.resume();
+
+            }
+
+            await ctx.close();
 
         }
 
-        if (progress >= 100) {
+    }
 
-            clearInterval(timer);
+    catch (e) {
 
-            loading.style.display = "none";
+        console.warn(
 
-            stage.style.display = "block";
+            "Audio unlock skipped.",
 
-        }
+            e
 
-    },25);
+        );
+
+    }
+
+    loading.style.display = "none";
+
+    stage.style.display = "block";
 
 });
 
 </script>
 
+<!-- =====================================
+Main Application
+===================================== -->
+
 <script
     type="module"
-    src="./js/main.js">
+    src="./main.js">
 </script>
 
 </body>
