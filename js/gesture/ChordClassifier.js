@@ -17,22 +17,17 @@ export default class ChordClassifier {
 
         this.notes = [
 
-            "C",
-            "C#",
-            "D",
-            "D#",
-            "E",
-            "F",
-            "F#",
-            "G",
-            "G#",
-            "A",
-            "A#",
-            "B"
+            "C","C#","D","D#","E","F",
+
+            "F#","G","G#","A","A#","B"
 
         ];
 
     }
+
+    /* ======================================
+        Root Note
+    ====================================== */
 
     setRoot(root) {
 
@@ -44,81 +39,127 @@ export default class ChordClassifier {
 
     }
 
-    classify(fingers) {
+    /* ======================================
+        Classify
+    ====================================== */
+
+    classify(detector) {
+
+        const count = detector.count();
+
+        const state = detector.states();
 
         let chord = this.root;
 
-        const count = fingers.count();
+        /* -------- Priority Gestures -------- */
 
-        const state = fingers.states();
+        if (detector.fist()) {
 
-        switch (count) {
-
-            case 0:
-
-                chord = "Mute";
-
-                break;
-
-            case 1:
-
-                chord = this.root;
-
-                break;
-
-            case 2:
-
-                chord = this.root + "m";
-
-                break;
-
-            case 3:
-
-                chord = this.root + "7";
-
-                break;
-
-            case 4:
-
-                chord = this.root + "maj7";
-
-                break;
-
-            case 5:
-
-                chord = this.root + "sus4";
-
-                break;
+            chord = "Mute";
 
         }
 
-        if (state[1] && state[2] && !state[3] && !state[4]) {
-
-            chord = this.root + "m";
-
-        }
-
-        if (state[0] && state[1] && state[2] && state[3] && state[4]) {
+        else if (detector.openPalm()) {
 
             chord = this.root + "maj7";
 
         }
 
-        if (state[1] && state[4] && !state[2]) {
+        else if (detector.peace()) {
 
-            chord = this.root + "5";
+            chord = this.root + "m";
+
+        }
+
+        else if (detector.rock()) {
+
+            chord = this.root + "7";
+
+        }
+
+        else {
+
+            switch (count) {
+
+                case 1:
+
+                    chord = this.root;
+
+                    break;
+
+                case 2:
+
+                    chord = this.root + "m";
+
+                    break;
+
+                case 3:
+
+                    chord = this.root + "7";
+
+                    break;
+
+                case 4:
+
+                    chord = this.root + "maj7";
+
+                    break;
+
+                case 5:
+
+                    chord = this.root + "sus4";
+
+                    break;
+
+                default:
+
+                    chord = "Mute";
+
+            }
+
+        }
+
+        /* ======================================
+            Confidence
+        ====================================== */
+
+        this.confidence =
+
+            Math.min(
+
+                1,
+
+                0.6 +
+
+                count * 0.08
+
+            );
+
+        /* ======================================
+            History
+        ====================================== */
+
+        if (
+
+            this.lastChord !== chord
+
+        ) {
+
+            this.history.push(chord);
+
+            if (
+
+                this.history.length > 20
+
+            ) {
+
+                this.history.shift();
+
+            }
 
         }
 
         this.lastChord = chord;
-
-        this.history.push(chord);
-
-        if (this.history.length > 20) {
-
-            this.history.shift();
-
-        }
 
         return {
 
@@ -128,11 +169,15 @@ export default class ChordClassifier {
 
             fingers: count,
 
-            history: this.history
+            history: [...this.history]
 
         };
 
     }
+
+    /* ======================================
+        Current
+    ====================================== */
 
     getCurrentChord() {
 
@@ -142,7 +187,21 @@ export default class ChordClassifier {
 
     getHistory() {
 
-        return this.history;
+        return [...this.history];
+
+    }
+
+    /* ======================================
+        Reset
+    ====================================== */
+
+    reset() {
+
+        this.lastChord = this.root;
+
+        this.history = [];
+
+        this.confidence = 1;
 
     }
 
