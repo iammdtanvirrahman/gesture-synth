@@ -1,0 +1,307 @@
+/* ==========================================================
+   Gesture Synth AI
+   modal.css
+========================================================== */
+
+/* ========= Help Modal ========= */
+
+#helpModal,
+#settingsPanel{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.65);
+
+    backdrop-filter:blur(12px);
+
+    z-index:1000;
+
+    opacity:0;
+
+    visibility:hidden;
+
+    transition:
+        opacity .3s ease,
+        visibility .3s ease;
+
+}
+
+/* ========= Active ========= */
+
+#helpModal.active,
+#settingsPanel.active{
+
+    opacity:1;
+
+    visibility:visible;
+
+}
+
+/* ========= Cards ========= */
+
+.help-content,
+.settings-card{
+
+    width:min(92vw,700px);
+
+    max-height:85vh;
+
+    overflow-y:auto;
+
+    padding:36px;
+
+    border-radius:24px;
+
+    background:var(--glass-bg);
+
+    backdrop-filter:blur(var(--glass-blur));
+
+    border:1px solid var(--glass-border);
+
+    box-shadow:var(--shadow-lg);
+
+    color:var(--text-primary);
+
+    position:relative;
+
+    animation:modalIn .35s ease;
+
+}
+
+/* ========= Close ========= */
+
+#closeHelp,
+#closeSettings{
+
+    position:absolute;
+
+    top:18px;
+
+    right:18px;
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    border:none;
+
+    background:rgba(255,255,255,.08);
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+#closeHelp:hover,
+#closeSettings:hover{
+
+    background:var(--cyan);
+
+    color:#000;
+
+    transform:rotate(90deg);
+
+}
+
+/* ========= Heading ========= */
+
+.help-content h2,
+.settings-card h2{
+
+    margin-bottom:20px;
+
+    font-size:2rem;
+
+    color:var(--cyan);
+
+}
+
+.help-content h3{
+
+    margin-top:28px;
+
+    margin-bottom:12px;
+
+    color:var(--gold);
+
+}
+
+/* ========= Lists ========= */
+
+.help-content ul{
+
+    padding-left:22px;
+
+}
+
+.help-content li{
+
+    margin:10px 0;
+
+    color:var(--text-secondary);
+
+}
+
+/* ========= Paragraph ========= */
+
+.help-content p{
+
+    line-height:1.8;
+
+    color:var(--text-secondary);
+
+}
+
+/* ========= Settings ========= */
+
+.setting-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin:18px 0;
+
+    padding:14px 18px;
+
+    border-radius:14px;
+
+    background:rgba(255,255,255,.04);
+
+}
+
+.setting-item label{
+
+    color:var(--text-secondary);
+
+}
+
+.setting-item input{
+
+    width:22px;
+
+    height:22px;
+
+    accent-color:var(--cyan);
+
+}
+
+/* ========= Toast ========= */
+
+#toastContainer{
+
+    position:fixed;
+
+    top:20px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+    z-index:2000;
+
+    pointer-events:none;
+
+}
+
+/* ========= Toast ========= */
+
+.toast{
+
+    min-width:260px;
+
+    padding:14px 18px;
+
+    border-radius:14px;
+
+    background:var(--glass-bg);
+
+    backdrop-filter:blur(var(--glass-blur));
+
+    border:1px solid var(--glass-border);
+
+    color:white;
+
+    box-shadow:var(--shadow-md);
+
+    animation:toastIn .35s ease;
+
+}
+
+/* ========= Animations ========= */
+
+@keyframes modalIn{
+
+    from{
+
+        transform:translateY(25px) scale(.95);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:translateY(0) scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes toastIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ========= Mobile ========= */
+
+@media(max-width:768px){
+
+    .help-content,
+    .settings-card{
+
+        width:95vw;
+
+        padding:24px;
+
+    }
+
+}
