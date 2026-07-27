@@ -3,82 +3,38 @@
    gesture/FingerDetector.js
 ========================================================== */
 
-import {
-    LANDMARK
-} from "../utils/constants.js";
+import { LANDMARK } from "../utils/constants.js";
 
 export default class FingerDetector {
 
     constructor() {
 
         this.landmarks = null;
+
         this.handedness = "Right";
 
+        this.cachedStates = [false, false, false, false, false];
+
     }
+
+    /* ======================================
+        Update
+    ====================================== */
 
     update(landmarks, handedness = "Right") {
 
         this.landmarks = landmarks;
         this.handedness = handedness;
 
-    }
+        if (!this.landmarks) {
 
-    /* =====================================================
-        Individual Fingers
-    ===================================================== */
+            this.cachedStates = [false, false, false, false, false];
 
-    thumb() {
-
-        if (!this.landmarks) return false;
-
-        const tip = this.landmarks[LANDMARK.THUMB_TIP];
-        const ip = this.landmarks[LANDMARK.THUMB_IP];
-
-        if (this.handedness === "Right") {
-
-            return tip.x < ip.x;
+            return;
 
         }
 
-        return tip.x > ip.x;
-
-    }
-
-    index() {
-
-        return this.landmarks[LANDMARK.INDEX_TIP].y <
-               this.landmarks[LANDMARK.INDEX_PIP].y;
-
-    }
-
-    middle() {
-
-        return this.landmarks[LANDMARK.MIDDLE_TIP].y <
-               this.landmarks[LANDMARK.MIDDLE_PIP].y;
-
-    }
-
-    ring() {
-
-        return this.landmarks[LANDMARK.RING_TIP].y <
-               this.landmarks[LANDMARK.RING_PIP].y;
-
-    }
-
-    pinky() {
-
-        return this.landmarks[LANDMARK.PINKY_TIP].y <
-               this.landmarks[LANDMARK.PINKY_PIP].y;
-
-    }
-
-    /* =====================================================
-        Finger Array
-    ===================================================== */
-
-    states() {
-
-        return [
+        this.cachedStates = [
 
             this.thumb(),
 
@@ -94,23 +50,116 @@ export default class FingerDetector {
 
     }
 
-    /* =====================================================
-        Finger Count
-    ===================================================== */
+    /* ======================================
+        Thumb
+    ====================================== */
 
-    count() {
+    thumb() {
 
-        return this.states()
+        if (!this.landmarks) return false;
 
-            .filter(Boolean)
+        const tip = this.landmarks[LANDMARK.THUMB_TIP];
+        const ip = this.landmarks[LANDMARK.THUMB_IP];
 
-            .length;
+        if (!tip || !ip) return false;
+
+        return this.handedness === "Right"
+            ? tip.x < ip.x
+            : tip.x > ip.x;
 
     }
 
-    /* =====================================================
-        Ready Gestures
-    ===================================================== */
+    /* ======================================
+        Index
+    ====================================== */
+
+    index() {
+
+        if (!this.landmarks) return false;
+
+        const tip = this.landmarks[LANDMARK.INDEX_TIP];
+        const pip = this.landmarks[LANDMARK.INDEX_PIP];
+
+        if (!tip || !pip) return false;
+
+        return tip.y < pip.y;
+
+    }
+
+    /* ======================================
+        Middle
+    ====================================== */
+
+    middle() {
+
+        if (!this.landmarks) return false;
+
+        const tip = this.landmarks[LANDMARK.MIDDLE_TIP];
+        const pip = this.landmarks[LANDMARK.MIDDLE_PIP];
+
+        if (!tip || !pip) return false;
+
+        return tip.y < pip.y;
+
+    }
+
+    /* ======================================
+        Ring
+    ====================================== */
+
+    ring() {
+
+        if (!this.landmarks) return false;
+
+        const tip = this.landmarks[LANDMARK.RING_TIP];
+        const pip = this.landmarks[LANDMARK.RING_PIP];
+
+        if (!tip || !pip) return false;
+
+        return tip.y < pip.y;
+
+    }
+
+    /* ======================================
+        Pinky
+    ====================================== */
+
+    pinky() {
+
+        if (!this.landmarks) return false;
+
+        const tip = this.landmarks[LANDMARK.PINKY_TIP];
+        const pip = this.landmarks[LANDMARK.PINKY_PIP];
+
+        if (!tip || !pip) return false;
+
+        return tip.y < pip.y;
+
+    }
+
+    /* ======================================
+        States
+    ====================================== */
+
+    states() {
+
+        return [...this.cachedStates];
+
+    }
+
+    /* ======================================
+        Count
+    ====================================== */
+
+    count() {
+
+        return this.cachedStates.filter(Boolean).length;
+
+    }
+
+    /* ======================================
+        Gestures
+    ====================================== */
 
     fist() {
 
@@ -126,7 +175,7 @@ export default class FingerDetector {
 
     peace() {
 
-        const f = this.states();
+        const f = this.cachedStates;
 
         return (
 
@@ -142,7 +191,7 @@ export default class FingerDetector {
 
     rock() {
 
-        const f = this.states();
+        const f = this.cachedStates;
 
         return (
 
@@ -158,31 +207,29 @@ export default class FingerDetector {
 
     pinch() {
 
+        if (!this.landmarks) return false;
+
         const a = this.landmarks[LANDMARK.THUMB_TIP];
         const b = this.landmarks[LANDMARK.INDEX_TIP];
+
+        if (!a || !b) return false;
 
         const dx = a.x - b.x;
         const dy = a.y - b.y;
 
-        return Math.sqrt(
-
-            dx * dx +
-
-            dy * dy
-
-        ) < 0.05;
+        return Math.hypot(dx, dy) < 0.05;
 
     }
 
-    /* =====================================================
+    /* ======================================
         Raw Info
-    ===================================================== */
+    ====================================== */
 
     getInfo() {
 
         return {
 
-            fingers: this.states(),
+            fingers: [...this.cachedStates],
 
             count: this.count(),
 
@@ -197,6 +244,18 @@ export default class FingerDetector {
             pinch: this.pinch()
 
         };
+
+    }
+
+    /* ======================================
+        Reset
+    ====================================== */
+
+    reset() {
+
+        this.landmarks = null;
+
+        this.cachedStates = [false, false, false, false, false];
 
     }
 
