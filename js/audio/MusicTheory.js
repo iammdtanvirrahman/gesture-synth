@@ -439,3 +439,153 @@ panic(){
     this.stopChord();
 
 }
+/* ==========================================================
+   SynthEngine.js
+   Part 3
+   Effects + Cleanup
+========================================================== */
+
+/* ======================================
+    Vibrato
+====================================== */
+
+setVibrato(depth = 0) {
+
+    if (!this.audio) return;
+
+    this.oscillators.forEach((osc) => {
+
+        const lfo = this.audio.createOscillator();
+        const lfoGain = this.audio.createGain();
+
+        lfo.type = "sine";
+        lfo.frequency.value = 5;
+
+        lfoGain.gain.value = depth * 15;
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.detune);
+
+        lfo.start();
+
+        osc.__lfo = lfo;
+        osc.__lfoGain = lfoGain;
+
+    });
+
+}
+
+/* ======================================
+    Stereo Pan
+====================================== */
+
+setPan(value = 0) {
+
+    if (!this.audio) return;
+
+    if (!this.panner) {
+
+        this.panner = this.audio.createStereoPanner();
+
+        this.filter.disconnect();
+
+        this.filter.connect(this.panner);
+
+        this.panner.connect(this.compressor);
+
+    }
+
+    this.panner.pan.linearRampToValueAtTime(
+
+        value,
+
+        this.audio.currentTime + 0.05
+
+    );
+
+}
+
+/* ======================================
+    Effect Presets
+====================================== */
+
+setPreset(name) {
+
+    switch (name) {
+
+        case "Warm":
+
+            this.setFilter(1200);
+            this.setMasterVolume(0.7);
+
+            break;
+
+        case "Bright":
+
+            this.setFilter(4500);
+            this.setMasterVolume(0.8);
+
+            break;
+
+        case "Dark":
+
+            this.setFilter(700);
+            this.setMasterVolume(0.6);
+
+            break;
+
+        default:
+
+            this.setFilter(
+                APP_CONFIG.FILTER.default
+            );
+
+    }
+
+}
+
+/* ======================================
+    Update Parameters
+====================================== */
+
+update({
+
+    volume,
+
+    filter,
+
+    vibrato
+
+}) {
+
+    if (volume !== undefined)
+
+        this.setMasterVolume(volume);
+
+    if (filter !== undefined)
+
+        this.setFilter(filter);
+
+    if (vibrato !== undefined)
+
+        this.setVibrato(vibrato);
+
+}
+
+/* ======================================
+    Destroy
+====================================== */
+
+destroy() {
+
+    this.stopChord();
+
+    if (this.audio) {
+
+        this.audio.close();
+
+    }
+
+    this.ready = false;
+
+}
