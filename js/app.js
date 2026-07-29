@@ -118,19 +118,30 @@ export default class App {
 
         this.loadingText = pick(
 
+            "loadingStatus",
+
             "loadingText"
 
         );
 
         this.loadingBar = pick(
 
+            "loadingFill",
+
             "loadingBar"
+
+        );
+
+        this.loadingPercent = pick(
+
+            "loadingPercent"
 
         );
 
         this.stage = pick(
 
             "mainStage",
+
             "stage"
 
         );
@@ -194,6 +205,12 @@ export default class App {
             this.loadingBar.style.width =
 
                 percent + "%";
+
+        }
+
+        if (this.loadingPercent) {
+
+            this.loadingPercent.textContent = percent + "%";
 
         }
 
