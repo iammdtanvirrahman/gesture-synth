@@ -3,32 +3,21 @@
    ui/HelpModal.js
 ========================================================== */
 
+import { findByIds } from '../utils/dom.js';
+
 export default class HelpModal {
 
     constructor() {
 
-        const find = (...ids) => {
 
-            for (const id of ids) {
+        this.modal = findByIds("helpModal");
 
-                const el = document.getElementById(id);
-
-                if (el) return el;
-
-            }
-
-            return null;
-
-        };
-
-        this.modal = find("helpModal");
-
-        this.openBtn = find(
+        this.openBtn = findByIds(
             "helpBtn",
             "helpButton"
         );
 
-        this.closeBtn = find(
+        this.closeBtn = findByIds(
             "closeHelp",
             "helpClose"
         );

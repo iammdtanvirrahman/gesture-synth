@@ -3,6 +3,8 @@
    ui/VolumeMeter.js
 ========================================================== */
 
+import { clearCanvas } from '../utils/canvas.js';
+
 export default class VolumeMeter {
 
     constructor(canvas) {
@@ -86,16 +88,7 @@ export default class VolumeMeter {
 
     clear() {
 
-        this.ctx.clearRect(
-
-            0,
-            0,
-
-            this.canvas.width,
-
-            this.canvas.height
-
-        );
+        clearCanvas(this.ctx, this.canvas);
 
     }
 

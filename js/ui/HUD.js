@@ -3,43 +3,32 @@
    ui/HUD.js
 ========================================================== */
 
+import { findByIds } from '../utils/dom.js';
+
 export default class HUD {
 
     constructor() {
 
-        const find = (...ids) => {
-
-            for (const id of ids) {
-
-                const el = document.getElementById(id);
-
-                if (el) return el;
-
-            }
-
-            return null;
-
-        };
 
         this.elements = {
 
-            fps: find("fps"),
+            fps: findByIds("fps"),
 
-            hands: find("hands"),
+            hands: findByIds("hands"),
 
-            chord: find("chordDisplay", "chord"),
+            chord: findByIds("chordDisplay", "chord"),
 
-            quality: find("qualityDisplay", "quality"),
+            quality: findByIds("qualityDisplay", "quality"),
 
-            status: find("aiStatus", "status"),
+            status: findByIds("aiStatus", "status"),
 
-            confidence: find("confidence"),
+            confidence: findByIds("confidence"),
 
-            filter: find("filterValue", "filter"),
+            filter: findByIds("filterValue", "filter"),
 
-            volume: find("volumeValue", "volume"),
+            volume: findByIds("volumeValue", "volume"),
 
-            key: find("currentKey", "key")
+            key: findByIds("currentKey", "key")
 
         };
 
