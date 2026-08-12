@@ -11,25 +11,63 @@ let app = null;
     Boot
 ========================================== */
 
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
 
     try {
 
         app = new App();
 
-        await app.initialize();
+        /*
+         * Camera access and Web Audio initialization must begin
+         * from the user's Start Experience click. Starting them
+         * automatically on DOMContentLoaded can be blocked by the
+         * browser's user-gesture policy.
+         */
+        const startButton = document.getElementById("startExperience");
 
-        console.log("🚀 Gesture Synth AI Started");
+        if (!startButton) {
+            throw new Error("Start Experience button not found.");
+        }
+
+        startButton.addEventListener("click", async () => {
+
+            try {
+
+                await app.start();
+
+                console.log("🚀 Gesture Synth AI Started");
+
+            }
+
+            catch (error) {
+
+                console.error("Application Error:", error);
+
+                const loadingStatus =
+                    document.getElementById("loadingStatus");
+
+                if (loadingStatus) {
+                    loadingStatus.textContent =
+                        "Startup failed. Check camera permission and console.";
+                }
+
+                alert(
+                    "Failed to start Gesture Synth AI.\n\n" +
+                    "Check:\n" +
+                    "• Camera Permission\n" +
+                    "• HTTPS / localhost\n" +
+                    "• Browser Console"
+                );
+
+            }
+
+        }, { once: true });
 
     }
 
     catch (error) {
 
-        console.error("Application Error:", error);
-
-        alert(
-            "Failed to start Gesture Synth AI.\n\nCheck:\n• Camera Permission\n• HTTPS\n• Browser Console"
-        );
+        console.error("Boot Error:", error);
 
     }
 
