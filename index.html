@@ -1,558 +1,103 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width,initial-scale=1.0">
-
-<title>
-
-Gesture Synth AI
-
-</title>
-
-<meta
-name="theme-color"
-content="#080b12">
-
-<meta
-name="description"
-content="Gesture Synth AI - AI Hand Tracking Musical Instrument">
-
-<link
-rel="preconnect"
-href="https://fonts.googleapis.com">
-
-<link
-rel="preconnect"
-href="https://fonts.gstatic.com"
-crossorigin>
-
-<link
-href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-rel="stylesheet">
-
-<link
-rel="stylesheet"
-href="./css/style.css">
-
-<!-- ===========================
-MediaPipe
-=========================== -->
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070a11">
+  <meta name="description" content="Gesture Synth AI — a premium hand-controlled musical instrument.">
+  <title>Gesture Synth AI</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23070a11'/%3E%3Cpath d='M18 38c7-22 13-22 14-7V18c0-4 6-4 6 0v12V15c0-4 6-4 6 0v15V18c0-4 6-4 6 0v18c0 10-7 16-17 16-8 0-13-5-15-14z' fill='none' stroke='%2300f3ff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 </head>
-
 <body>
-
-<!-- =====================================
-Landing Screen
-===================================== -->
-
-<div id="landingScreen">
-
-<div class="landingCard">
-
-<h1>
-
-Gesture Synth AI
-
-</h1>
-
-<p>
-
-Play music using only your hands.
-
-</p>
-
-<button id="startExperience">
-
-Start Experience
-
-</button>
-
-</div>
-
-</div>
-
-<!-- =====================================
-Loading Screen
-===================================== -->
-
-<div
-id="loadingScreen"
-class="hidden">
-
-<div class="loaderCard">
-
-<h2>
-
-Initializing...
-
-</h2>
-
-<div class="progress">
-
-<div id="loadingFill">
-
-</div>
-
-</div>
-
-<div id="loadingPercent">
-
-0%
-
-</div>
-
-<p id="loadingStatus">
-
-Preparing Camera...
-
-</p>
-
-</div>
-
-</div>
-
-<!-- =====================================
-Main Stage
-===================================== -->
-
-<div
-id="stage"
-style="display:none;">
-    <!-- =====================================
-Main Workspace
-===================================== -->
-
-<div id="workspace">
-
-    <!-- ==========================
-        Camera Layer
-    =========================== -->
-
-    <div id="cameraContainer">
-
-        <video
-            id="video"
-            autoplay
-            playsinline
-            muted
-        ></video>
-
-        <canvas
-            id="canvas"
-            width="1280"
-            height="720"
-        ></canvas>
-
-    </div>
-
-    <!-- ==========================
-        Right HUD
-    =========================== -->
-
-    <aside id="hudPanel">
-
-        <div class="hudCard">
-
-            <h3>
-
-                System
-
-            </h3>
-
-            <div class="hudRow">
-
-                <span>FPS</span>
-
-                <span id="fps">0</span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Hands</span>
-
-                <span id="hands">0</span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Status</span>
-
-                <span id="aiStatus">
-
-                    Initializing
-
-                </span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Quality</span>
-
-                <span id="qualityDisplay">
-
-                    --
-
-                </span>
-
-            </div>
-
+  <main id="stage" class="stage">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="energyCanvas" aria-hidden="true"></canvas>
+    <canvas id="canvas" aria-hidden="true"></canvas>
+
+    <header class="topbar glass">
+      <div class="brand">
+        <span class="brand-mark">✦</span>
+        <div><strong>Gesture Synth</strong><small>AI INSTRUMENT · v5</small></div>
+      </div>
+      <div class="top-actions">
+        <span class="live-dot"><i></i> LIVE</span>
+        <button id="helpBtn" class="icon-btn" aria-label="Open gesture guide">?</button>
+      </div>
+    </header>
+
+    <aside id="hudPanel" class="hud">
+      <section class="panel glass">
+        <div class="panel-head"><span>SYSTEM</span><b id="aiStatus">Standby</b></div>
+        <div class="metric-grid">
+          <div><small>FPS</small><strong id="fps">0</strong></div>
+          <div><small>HANDS</small><strong id="hands">0</strong></div>
+          <div><small>QUALITY</small><strong id="qualityDisplay">—</strong></div>
+          <div><small>KEY</small><strong id="currentKey">C</strong></div>
         </div>
+      </section>
 
-        <div class="hudCard">
+      <section class="panel music-panel glass">
+        <small class="eyebrow">CURRENT CHORD</small>
+        <div id="chordDisplay" class="chord">—</div>
+        <div class="confidence"><span>Confidence</span><b id="confidence">0%</b></div>
+        <div class="confidence-track"><i id="confidenceBar"></i></div>
+      </section>
 
-            <h3>
-
-                Music
-
-            </h3>
-
-            <div
-                id="chordDisplay"
-                class="bigChord">
-
-                --
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Confidence</span>
-
-                <span id="confidence">
-
-                    0%
-
-                </span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Filter</span>
-
-                <span id="filterValue">
-
-                    0 Hz
-
-                </span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Volume</span>
-
-                <span id="volumeValue">
-
-                    0%
-
-                </span>
-
-            </div>
-
-            <div class="hudRow">
-
-                <span>Key</span>
-
-                <span id="currentKey">
-
-                    C
-
-                </span>
-
-            </div>
-
-        </div>
-
+      <section class="panel glass controls-panel">
+        <div class="control-row"><span>Filter</span><b id="filterValue">0 Hz</b></div>
+        <div class="control-row"><span>Volume</span><b id="volumeValue">0%</b></div>
+      </section>
     </aside>
 
-</div>
+    <div class="hint glass">✋ <span>Raise your hand · fingers control harmony</span></div>
 
-<!-- ==========================
-Volume Meter
-========================== -->
-
-<div id="bottomBar">
-
-    <canvas
-        id="volumeCanvas"
-        width="420"
-        height="80">
-    </canvas>
-
-</div>
-<!-- =====================================
-Top Controls
-===================================== -->
-
-<header id="topBar">
-
-    <div class="logo">
-
-        <h2>
-
-            Gesture Synth AI
-
-        </h2>
-
+    <div class="meter-wrap glass">
+      <div class="meter-title"><span>OUTPUT</span><b>WEB AUDIO</b></div>
+      <canvas id="volumeCanvas" width="420" height="80"></canvas>
     </div>
 
-    <div class="controls">
-
-        <button id="helpBtn">
-
-            Help
-
-        </button>
-
+    <div id="landingScreen" class="overlay">
+      <div class="landing-card glass">
+        <div class="orb"><span>✦</span></div>
+        <div class="kicker">REAL-TIME AI INSTRUMENT</div>
+        <h1>Make music<br><em>with your hands.</em></h1>
+        <p>Gesture Synth turns your camera into an expressive musical interface using hand tracking and Web Audio.</p>
+        <button id="startExperience" class="primary-btn"><span>Start Experience</span><b>→</b></button>
+        <div class="landing-meta"><span>● Camera required</span><span>● Best in Chrome</span><span>● HTTPS / localhost</span></div>
+      </div>
     </div>
 
-</header>
-
-<!-- =====================================
-Help Modal
-===================================== -->
-
-<div id="helpModal" class="modal">
-
-    <div class="modalContent">
-
-        <div class="modalHeader">
-
-            <h2>
-
-                Gesture Guide
-
-            </h2>
-
-            <button id="closeHelp">
-
-                ✕
-
-            </button>
-
-        </div>
-
-        <div class="modalBody">
-
-            <div id="gestureList">
-
-                <div class="gesture-item">
-
-                    <strong>Fist</strong>
-
-                    <span>Mute</span>
-
-                </div>
-
-                <div class="gesture-item">
-
-                    <strong>One Finger</strong>
-
-                    <span>Major</span>
-
-                </div>
-
-                <div class="gesture-item">
-
-                    <strong>Peace</strong>
-
-                    <span>Minor</span>
-
-                </div>
-
-                <div class="gesture-item">
-
-                    <strong>Rock</strong>
-
-                    <span>7th</span>
-
-                </div>
-
-                <div class="gesture-item">
-
-                    <strong>Open Palm</strong>
-
-                    <span>Maj7</span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="modalFooter">
-
-            <span>
-
-                Version
-
-                <strong id="version">
-
-                    4.0
-
-                </strong>
-
-            </span>
-
-        </div>
-
+    <div id="loadingScreen" class="overlay hidden">
+      <div class="loader-card glass">
+        <div class="loader-orb"></div>
+        <div class="kicker">INITIALIZING ENGINE</div>
+        <h2>Preparing your instrument</h2>
+        <p id="loadingStatus">Starting…</p>
+        <div class="progress"><i id="loadingFill"></i></div>
+        <div class="progress-meta"><span>BOOT SEQUENCE</span><b id="loadingPercent">0%</b></div>
+      </div>
     </div>
 
-</div>
-
-<!-- =====================================
-Footer
-===================================== -->
-
-<footer id="footer">
-
-    <span>
-
-        Gesture Synth AI
-
-    </span>
-
-    <span>
-
-        Built with MediaPipe + Web Audio API
-
-    </span>
-
-</footer>
-<!-- =====================================
-Startup Logic
-===================================== -->
-
-<script>
-
-const landing = document.getElementById("landingScreen");
-const loading = document.getElementById("loadingScreen");
-const stage = document.getElementById("stage");
-
-const startBtn = document.getElementById("startExperience");
-
-startBtn.addEventListener("click", async () => {
-
-    landing.style.display = "none";
-
-    loading.classList.remove("hidden");
-
-    const fill =
-        document.getElementById("loadingFill");
-
-    const percent =
-        document.getElementById("loadingPercent");
-
-    const status =
-        document.getElementById("loadingStatus");
-
-    const steps = [
-
-        "Checking Browser...",
-        "Preparing Camera...",
-        "Loading MediaPipe...",
-        "Initializing Audio...",
-        "Preparing Interface...",
-        "Starting Gesture Synth AI..."
-
-    ];
-
-    for (let i = 0; i < steps.length; i++) {
-
-        status.textContent = steps[i];
-
-        const p = Math.round(
-
-            ((i + 1) / steps.length) * 100
-
-        );
-
-        fill.style.width = p + "%";
-
-        percent.textContent = p + "%";
-
-        await new Promise(resolve =>
-
-            setTimeout(resolve, 350)
-
-        );
-
-    }
-
-    /* ==================================
-       Unlock Audio
-    =================================== */
-
-    try {
-
-        const AudioContext =
-
-            window.AudioContext ||
-
-            window.webkitAudioContext;
-
-        if (AudioContext) {
-
-            const ctx = new AudioContext();
-
-            if (ctx.state === "suspended") {
-
-                await ctx.resume();
-
-            }
-
-            await ctx.close();
-
-        }
-
-    }
-
-    catch (e) {
-
-        console.warn(
-
-            "Audio unlock skipped.",
-
-            e
-
-        );
-
-    }
-
-    loading.style.display = "none";
-
-    stage.style.display = "block";
-
-});
-
-</script>
-
-<!-- =====================================
-Main Application
-===================================== -->
-
-<script
-    type="module"
-    src="./js/main.js">
-</script>
-
+    <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-label="Gesture guide">
+      <div class="modal-card glass">
+        <div class="modal-head"><div><span class="kicker">GESTURE MAP</span><h2>Play with your hands</h2></div><button id="closeHelp" class="icon-btn">×</button></div>
+        <div id="gestureList" class="gesture-list">
+          <div><b>✊ Fist</b><span>Mute</span></div>
+          <div><b>☝ One finger</b><span>Major</span></div>
+          <div><b>✌ Peace</b><span>Minor</span></div>
+          <div><b>🤘 Rock</b><span>7th</span></div>
+          <div><b>🖐 Open palm</b><span>Maj7</span></div>
+        </div>
+        <div class="modal-foot">Gesture Synth AI <span>Version <strong id="version">5.0</strong></span></div>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="./js/main.js"></script>
 </body>
-
 </html>
