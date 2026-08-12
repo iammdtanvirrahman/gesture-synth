@@ -1,71 +1,115 @@
-import { FINGER_TIPS, COLORS } from '../utils/constants.js';
+import { FINGER_TIPS, COLORS } from "../utils/constants.js";
+
+const HAND_CONNECTIONS = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [0,9],[9,10],[10,11],[11,12],
+    [0,13],[13,14],[14,15],[15,16],
+    [0,17],[17,18],[18,19],[19,20],
+    [5,9],[9,13],[13,17]
+];
 
 export default class LandmarkRenderer {
     constructor(canvas) {
-        // ... (আগের কোড) ...
-        
-        // FIX: হার্ডকোড করা কালারের বদলে কনস্ট্যান্ট ব্যবহার
-        this.glowColor = COLORS.CYAN; 
-        
-        // FIX: একাধিক হাতের জন্য অ্যারে ব্যবহার
-        this.previousHands = []; 
-        
-        // ... (বাকি কনস্ট্রাক্টর কোড) ...
+        if (!canvas) throw new Error("LandmarkRenderer: canvas not found.");
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.landmarks = [];
+        this.previousHands = [];
+        this.glowColor = COLORS?.CYAN || "#00f3ff";
     }
 
-    // FIX: ইনডেক্স অনুযায়ী প্রতিটি হাতের ট্রেইল আলাদাভাবে ট্র্যাক করা
-    drawTrail(hand, handIndex) {
-        if (!this.previousHands[handIndex]) {
-            this.previousHands[handIndex] = hand.map(p => ({ ...p }));
-            return;
-        }
+    update(results) {
+        this.landmarks = results?.multiHandLandmarks || [];
+    }
 
+    drawConnections(hand) {
         const ctx = this.ctx;
-        ctx.strokeStyle = "rgba(0,243,255,.15)";
-        ctx.lineWidth = 2;
-
-        for (let i = 0; i < hand.length; i++) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,243,255,.72)";
+        ctx.lineWidth = Math.max(1.5, this.canvas.width / 900);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.glowColor;
+        for (const [a,b] of HAND_CONNECTIONS) {
+            const p = hand[a], q = hand[b];
+            if (!p || !q) continue;
             ctx.beginPath();
-            ctx.moveTo(
-                this.previousHands[handIndex][i].x * this.canvas.width,
-                this.previousHands[handIndex][i].y * this.canvas.height
-            );
-            ctx.lineTo(
-                hand[i].x * this.canvas.width,
-                hand[i].y * this.canvas.height
-            );
+            ctx.moveTo(p.x * this.canvas.width, p.y * this.canvas.height);
+            ctx.lineTo(q.x * this.canvas.width, q.y * this.canvas.height);
             ctx.stroke();
         }
-
-        this.previousHands[handIndex] = hand.map(p => ({ ...p }));
+        ctx.restore();
     }
 
-    // FIX: হার্ডকোড করা টিপস-এর বদলে FINGER_TIPS কনস্ট্যান্ট ব্যবহার
+    drawPoints(hand) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.glowColor;
+        for (let i = 0; i < hand.length; i++) {
+            const p = hand[i];
+            ctx.beginPath();
+            ctx.arc(p.x * this.canvas.width, p.y * this.canvas.height, i === 0 ? 5 : 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(235,255,255,.95)";
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
     drawFingerTips(hand) {
         const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,255,213,.95)";
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "#00ffd5";
         for (const i of FINGER_TIPS) {
             const p = hand[i];
-            // ... (আগের গ্রেডিয়েন্ট এবং ড্রয়িং কোড) ...
+            if (!p) continue;
+            ctx.beginPath();
+            ctx.arc(p.x * this.canvas.width, p.y * this.canvas.height, 8, 0, Math.PI * 2);
+            ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    drawTrail(hand, index) {
+        const previous = this.previousHands[index];
+        if (!previous || previous.length !== hand.length) {
+            this.previousHands[index] = hand.map(p => ({ x:p.x, y:p.y }));
+            return;
+        }
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,243,255,.14)";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < hand.length; i++) {
+            ctx.beginPath();
+            ctx.moveTo(previous[i].x * this.canvas.width, previous[i].y * this.canvas.height);
+            ctx.lineTo(hand[i].x * this.canvas.width, hand[i].y * this.canvas.height);
+            ctx.stroke();
+        }
+        ctx.restore();
+        this.previousHands[index] = hand.map(p => ({ x:p.x, y:p.y }));
     }
 
     render() {
-        this.clear();
-        this.pulse();
-
-        // FIX: ইনডেক্স পাস করা হচ্ছে drawTrail-এ
-        this.landmarks.forEach((hand, index) => {
-            this.drawTrail(hand, index);
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.landmarks.forEach((hand, i) => {
+            this.drawTrail(hand, i);
             this.drawConnections(hand);
             this.drawPoints(hand);
             this.drawFingerTips(hand);
-            this.drawEnergy(hand);
         });
+        if (!this.landmarks.length) this.previousHands = [];
     }
+
+    resize() {}
 
     reset() {
         this.landmarks = [];
-        this.previousHands = []; // FIX: অ্যারে রিসেট
-        this.clear();
+        this.previousHands = [];
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
