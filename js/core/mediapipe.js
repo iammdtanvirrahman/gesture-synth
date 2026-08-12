@@ -13,7 +13,7 @@ export class MediaPipeManager {
         this.sending = false;
         this.stopped = false;
         this.lastInference = 0;
-        this.minFrameGap = 1000 / APP_CONFIG.PERFORMANCE.inferenceFps;
+        this.minFrameGap = 1000 / (APP_CONFIG.PERFORMANCE?.inferenceFps || 24);
     }
 
     async initialize() {
@@ -23,9 +23,7 @@ export class MediaPipeManager {
         try {
             if (typeof Hands === "undefined") throw new Error("MediaPipe Hands library failed to load.");
 
-            this.hands = new Hands({
-                locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-            });
+            this.hands = new Hands({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
             this.hands.setOptions({
                 maxNumHands: APP_CONFIG.MAX_HANDS,
                 modelComplexity: 0,
@@ -34,19 +32,14 @@ export class MediaPipeManager {
             });
             this.hands.onResults(results => this.onResultsCallback?.(results));
 
-            if (!this.video.srcObject) {
-                if (typeof Camera === "undefined") throw new Error("MediaPipe Camera Utils failed to load.");
-                this.camera = new Camera(this.video, {
-                    onFrame: async () => this.sendFrame(),
-                    width: APP_CONFIG.CAMERA.width,
-                    height: APP_CONFIG.CAMERA.height,
-                    facingMode: APP_CONFIG.CAMERA.facingMode
-                });
-                await this.camera.start();
-            } else {
-                this.frameReq = requestAnimationFrame(this.frameLoop);
-            }
-
+            if (typeof Camera === "undefined") throw new Error("MediaPipe Camera Utils failed to load.");
+            this.camera = new Camera(this.video, {
+                onFrame: async () => this.sendFrame(),
+                width: APP_CONFIG.CAMERA.width,
+                height: APP_CONFIG.CAMERA.height,
+                facingMode: APP_CONFIG.CAMERA.facingMode
+            });
+            await this.camera.start();
             this.ready = true;
         } catch (error) {
             this.stop();
@@ -56,20 +49,20 @@ export class MediaPipeManager {
         }
     }
 
-    frameLoop = async now => {
-        if (this.stopped || !this.hands) return;
-        if (now - this.lastInference >= this.minFrameGap) await this.sendFrame(now);
-        if (!this.stopped) this.frameReq = requestAnimationFrame(this.frameLoop);
-    };
-
-    async sendFrame(now = performance.now()) {
-        if (!this.hands || this.sending || this.video.readyState < 2) return;
+    async sendFrame() {
+        const now = performance.now();
+        if (this.stopped || !this.hands || this.sending || this.video.readyState < 2) return;
         if (now - this.lastInference < this.minFrameGap) return;
+
         this.lastInference = now;
         this.sending = true;
-        try { await this.hands.send({ image: this.video }); }
-        catch (error) { if (APP_CONFIG.DEBUG) console.warn("MediaPipe frame skipped:", error); }
-        finally { this.sending = false; }
+        try {
+            await this.hands.send({ image: this.video });
+        } catch (error) {
+            if (APP_CONFIG.DEBUG) console.warn("MediaPipe frame skipped:", error);
+        } finally {
+            this.sending = false;
+        }
     }
 
     onResults(callback) { this.onResultsCallback = callback; }
