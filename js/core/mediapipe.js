@@ -91,33 +91,70 @@ export class MediaPipeManager {
 
             });
 
-            this.camera = new Camera(
+            // If the video element already has a srcObject (created by another camera manager),
+            // don't start a second getUserMedia stream. Instead, feed frames from the existing
+            // video element to MediaPipe via requestAnimationFrame.
+            if (this.video && this.video.srcObject) {
 
-                this.video,
+                this._useExternalStream = true;
 
-                {
+                this._frameLoop = async () => {
 
-                    onFrame: async () => {
+                    if (!this.hands) return;
 
-                        if (!this.hands) return;
+                    try {
 
-                        await this.hands.send({
+                        await this.hands.send({ image: this.video });
 
-                            image: this.video
+                    }
 
-                        });
+                    catch (e) {
 
-                    },
+                        // ignore transient frame send errors
 
-                    width: APP_CONFIG.CAMERA.width,
+                        console.warn("MediaPipe frame error:", e);
 
-                    height: APP_CONFIG.CAMERA.height
+                    }
 
-                }
+                    this._frameReq = requestAnimationFrame(this._frameLoop);
 
-            );
+                };
 
-            await this.camera.start();
+                this._frameReq = requestAnimationFrame(this._frameLoop);
+
+            }
+
+            else {
+
+                this.camera = new Camera(
+
+                    this.video,
+
+                    {
+
+                        onFrame: async () => {
+
+                            if (!this.hands) return;
+
+                            await this.hands.send({
+
+                                image: this.video
+
+                            });
+
+                        },
+
+                        width: APP_CONFIG.CAMERA.width,
+
+                        height: APP_CONFIG.CAMERA.height
+
+                    }
+
+                );
+
+                await this.camera.start();
+
+            }
 
             this.ready = true;
 
@@ -200,6 +237,27 @@ export class MediaPipeManager {
             console.warn(e);
 
         }
+
+        // If we used an external stream and requestAnimationFrame loop, cancel it.
+        try {
+
+            if (this._frameReq) {
+
+                cancelAnimationFrame(this._frameReq);
+
+                this._frameReq = null;
+
+            }
+
+        }
+
+        catch (e) {
+
+            console.warn(e);
+
+        }
+
+        this._useExternalStream = false;
 
         this.camera = null;
 
