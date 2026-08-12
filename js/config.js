@@ -1,21 +1,20 @@
 /* VisionFlow — performance-first runtime configuration */
 export const APP_CONFIG = {
     APP_NAME: "VisionFlow",
-    VERSION: "6.0.0",
+    VERSION: "6.1.0",
     DEBUG: false,
-
     MAX_HANDS: 1,
 
     CAMERA: {
-        width: 960,
-        height: 540,
+        width: 640,
+        height: 360,
         facingMode: "user",
-        frameRate: 30
+        frameRate: 24
     },
 
     PERFORMANCE: {
-        pixelRatio: 1.5,
-        inferenceFps: 30,
+        pixelRatio: 1.25,
+        inferenceFps: 24,
         renderFps: 60,
         trail: false
     },
@@ -32,16 +31,17 @@ export const APP_CONFIG = {
     FILTER: { min: 250, max: 5000, default: 1200 },
 
     DETECTION: {
-        minHandDetectionConfidence: 0.65,
-        minHandPresenceConfidence: 0.65,
-        minTrackingConfidence: 0.65
+        minHandDetectionConfidence: 0.55,
+        minHandPresenceConfidence: 0.55,
+        minTrackingConfidence: 0.55
     },
 
     UI: {
         showFPS: true,
         showLandmarks: true,
         showParticles: true,
-        showEnergy: true
+        showEnergy: true,
+        updateHz: 15
     },
 
     COLORS: {
