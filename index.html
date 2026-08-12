@@ -1,103 +1,63 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#070a11">
-  <meta name="description" content="Gesture Synth AI — a premium hand-controlled musical instrument.">
-  <title>Gesture Synth AI</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23070a11'/%3E%3Cpath d='M18 38c7-22 13-22 14-7V18c0-4 6-4 6 0v12V15c0-4 6-4 6 0v15V18c0-4 6-4 6 0v18c0 10-7 16-17 16-8 0-13-5-15-14z' fill='none' stroke='%2300f3ff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070b">
+<meta name="description" content="VisionFlow — a camera-controlled spatial interface.">
+<title>VisionFlow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2305070b'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%239fffe9' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%239fffe9'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 </head>
 <body>
-  <main id="stage" class="stage">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="energyCanvas" aria-hidden="true"></canvas>
-    <canvas id="canvas" aria-hidden="true"></canvas>
+<main id="world">
+  <video id="camera" autoplay muted playsinline></video>
+  <canvas id="tracking"></canvas>
+  <div class="vignette"></div>
 
-    <header class="topbar glass">
-      <div class="brand">
-        <span class="brand-mark">✦</span>
-        <div><strong>Gesture Synth</strong><small>AI INSTRUMENT · v5</small></div>
-      </div>
-      <div class="top-actions">
-        <span class="live-dot"><i></i> LIVE</span>
-        <button id="helpBtn" class="icon-btn" aria-label="Open gesture guide">?</button>
-      </div>
-    </header>
+  <header class="top glass">
+    <div class="brand"><span class="logo">◉</span><div><strong>VisionFlow</strong><small>SPATIAL INTERFACE</small></div></div>
+    <div class="system"><span id="trackingState"><i></i> STANDBY</span><button id="help" class="circle">?</button></div>
+  </header>
 
-    <aside id="hudPanel" class="hud">
-      <section class="panel glass">
-        <div class="panel-head"><span>SYSTEM</span><b id="aiStatus">Standby</b></div>
-        <div class="metric-grid">
-          <div><small>FPS</small><strong id="fps">0</strong></div>
-          <div><small>HANDS</small><strong id="hands">0</strong></div>
-          <div><small>QUALITY</small><strong id="qualityDisplay">—</strong></div>
-          <div><small>KEY</small><strong id="currentKey">C</strong></div>
-        </div>
-      </section>
+  <section class="welcome" id="welcome">
+    <div class="welcome-card glass">
+      <div class="vision-orb">◉</div><span class="eyebrow">CAMERA CONTROLLED UI</span>
+      <h1>Touch the air.</h1>
+      <p>Your camera becomes a spatial controller. Point, pinch, drag and swipe through floating glass surfaces.</p>
+      <button id="start" class="start">Enter VisionFlow <b>→</b></button>
+      <small>Camera permission required · Chrome recommended</small>
+    </div>
+  </section>
 
-      <section class="panel music-panel glass">
-        <small class="eyebrow">CURRENT CHORD</small>
-        <div id="chordDisplay" class="chord">—</div>
-        <div class="confidence"><span>Confidence</span><b id="confidence">0%</b></div>
-        <div class="confidence-track"><i id="confidenceBar"></i></div>
-      </section>
-
-      <section class="panel glass controls-panel">
-        <div class="control-row"><span>Filter</span><b id="filterValue">0 Hz</b></div>
-        <div class="control-row"><span>Volume</span><b id="volumeValue">0%</b></div>
-      </section>
-    </aside>
-
-    <div class="hint glass">✋ <span>Raise your hand · fingers control harmony</span></div>
-
-    <div class="meter-wrap glass">
-      <div class="meter-title"><span>OUTPUT</span><b>WEB AUDIO</b></div>
-      <canvas id="volumeCanvas" width="420" height="80"></canvas>
+  <section id="desktop" class="desktop hidden">
+    <div class="hero-card glass window" data-window="home">
+      <div class="window-bar"><span>VISION SPACE</span><button class="close">×</button></div>
+      <div class="hero-content"><span class="eyebrow">WELCOME BACK</span><h2>Spatial control,<br><em>without a mouse.</em></h2><p>Move your index finger to aim. Pinch thumb + index to select. Pinch and move to drag.</p></div>
+      <div class="gesture-pills"><span>☝ Point</span><span>🤏 Pinch</span><span>✋ Open</span><span>✊ Back</span></div>
     </div>
 
-    <div id="landingScreen" class="overlay">
-      <div class="landing-card glass">
-        <div class="orb"><span>✦</span></div>
-        <div class="kicker">REAL-TIME AI INSTRUMENT</div>
-        <h1>Make music<br><em>with your hands.</em></h1>
-        <p>Gesture Synth turns your camera into an expressive musical interface using hand tracking and Web Audio.</p>
-        <button id="startExperience" class="primary-btn"><span>Start Experience</span><b>→</b></button>
-        <div class="landing-meta"><span>● Camera required</span><span>● Best in Chrome</span><span>● HTTPS / localhost</span></div>
-      </div>
-    </div>
+    <div class="mini-card weather glass window draggable" data-window="weather"><div class="window-bar"><span>WEATHER</span><button class="close">×</button></div><div class="weather-icon">☼</div><div class="temp">28°</div><span class="muted">Dhaka · Clear skies</span></div>
+    <div class="mini-card music glass window draggable" data-window="music"><div class="window-bar"><span>NOW PLAYING</span><button class="close">×</button></div><div class="album">♪</div><strong>Spatial Dreams</strong><span class="muted">VisionFlow Radio</span><div class="progress"><i></i></div></div>
+    <div class="mini-card system-card glass window draggable" data-window="system"><div class="window-bar"><span>SYSTEM</span><button class="close">×</button></div><div class="stats"><span>HAND<br><b id="handCount">0</b></span><span>FPS<br><b id="fps">0</b></span><span>MODE<br><b>LIVE</b></span></div></div>
+  </section>
 
-    <div id="loadingScreen" class="overlay hidden">
-      <div class="loader-card glass">
-        <div class="loader-orb"></div>
-        <div class="kicker">INITIALIZING ENGINE</div>
-        <h2>Preparing your instrument</h2>
-        <p id="loadingStatus">Starting…</p>
-        <div class="progress"><i id="loadingFill"></i></div>
-        <div class="progress-meta"><span>BOOT SEQUENCE</span><b id="loadingPercent">0%</b></div>
-      </div>
-    </div>
+  <nav id="dock" class="dock glass hidden">
+    <button class="dock-app active" data-open="home"><b>◈</b><span>Space</span></button>
+    <button class="dock-app" data-open="weather"><b>☼</b><span>Weather</span></button>
+    <button class="dock-app" data-open="music"><b>♫</b><span>Music</span></button>
+    <button class="dock-app" data-open="system"><b>⌁</b><span>System</span></button>
+  </nav>
 
-    <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-label="Gesture guide">
-      <div class="modal-card glass">
-        <div class="modal-head"><div><span class="kicker">GESTURE MAP</span><h2>Play with your hands</h2></div><button id="closeHelp" class="icon-btn">×</button></div>
-        <div id="gestureList" class="gesture-list">
-          <div><b>✊ Fist</b><span>Mute</span></div>
-          <div><b>☝ One finger</b><span>Major</span></div>
-          <div><b>✌ Peace</b><span>Minor</span></div>
-          <div><b>🤘 Rock</b><span>7th</span></div>
-          <div><b>🖐 Open palm</b><span>Maj7</span></div>
-        </div>
-        <div class="modal-foot">Gesture Synth AI <span>Version <strong id="version">5.0</strong></span></div>
-      </div>
-    </div>
-  </main>
-  <script type="module" src="./js/main.js"></script>
+  <div id="cursor" class="cursor"><span></span><b></b></div>
+  <div id="toast" class="toast glass"></div>
+
+  <div id="helpModal" class="modal"><div class="help-card glass"><button id="closeHelp" class="circle">×</button><span class="eyebrow">GESTURE GUIDE</span><h2>Control the space.</h2><div class="guide"><div><b>☝</b><span>Point</span><small>Move spatial cursor</small></div><div><b>🤏</b><span>Pinch</span><small>Click / select</small></div><div><b>🤏 + move</b><span>Drag</span><small>Move a window</small></div><div><b>✋</b><span>Open palm</span><small>Release / navigate</small></div><div><b>✊</b><span>Fist</span><small>Back / close</small></div></div></div></div>
+</main>
+<script type="module" src="./js/main.js"></script>
 </body>
 </html>
