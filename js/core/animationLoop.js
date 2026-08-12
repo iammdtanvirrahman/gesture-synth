@@ -1,3 +1,5 @@
+import APP_CONFIG from "../config.js";
+
 export default class AnimationLoop {
     constructor({ mediapipe, fingerDetector, handTilt, chordClassifier, synth, landmarkRenderer, energyRenderer, hud, volumeMeter }) {
         this.mp = mediapipe;
@@ -10,7 +12,7 @@ export default class AnimationLoop {
         this.hud = hud;
         this.volume = volumeMeter;
         this.running = false;
-        this.frameId = null;
+        this.frameId = 0;
         this.lastTime = performance.now();
         this.fps = 0;
         this.lastChord = null;
@@ -18,6 +20,8 @@ export default class AnimationLoop {
         this.lastVolume = null;
         this.lastVibrato = null;
         this.lastHandCount = 0;
+        this.lastUI = 0;
+        this.uiInterval = 1000 / 20;
     }
 
     start() {
@@ -30,7 +34,7 @@ export default class AnimationLoop {
     stop() {
         this.running = false;
         if (this.frameId) cancelAnimationFrame(this.frameId);
-        this.frameId = null;
+        this.frameId = 0;
     }
 
     loop = now => {
@@ -38,13 +42,13 @@ export default class AnimationLoop {
         const delta = Math.max(1, now - this.lastTime);
         this.lastTime = now;
         this.fps = Math.round(1000 / delta);
-        this.hud?.updateFPS?.(this.fps);
+        if (APP_CONFIG.UI.showFPS) this.hud?.updateFPS?.(this.fps);
         try {
             this.landmark?.render?.();
             this.energy?.render?.();
             this.volume?.render?.();
         } catch (error) {
-            console.error("Render error:", error);
+            if (APP_CONFIG.DEBUG) console.error("Render error:", error);
         }
         this.frameId = requestAnimationFrame(this.loop);
     };
@@ -54,17 +58,18 @@ export default class AnimationLoop {
             this.landmark?.update?.(results);
             const hands = results?.multiHandLandmarks || [];
             const count = hands.length;
-            this.hud?.setHands?.(count);
             if (count !== this.lastHandCount) {
                 this.lastHandCount = count;
+                this.hud?.setHands?.(count);
                 this.hud?.setStatus?.(count ? "Tracking" : "Live", true);
             }
             if (!count) {
-                this.lastChord = null;
-                this.synth?.stopChord?.();
+                if (this.lastChord !== "Mute") {
+                    this.lastChord = "Mute";
+                    this.synth?.stopChord?.();
+                }
                 this.energy?.update?.(0);
                 this.volume?.update?.(0);
-                this.hud?.update?.({ chord:"—", confidence:0, volume:0 });
                 return;
             }
 
@@ -81,25 +86,36 @@ export default class AnimationLoop {
                 this.lastChord = chord.chord;
                 this.synth.playChord(chord.chord);
             }
-            const filterChanged = this.lastFilter === null || Math.abs(filter - this.lastFilter) > 35;
-            const volumeChanged = this.lastVolume === null || Math.abs(volume - this.lastVolume) > .025;
-            const vibratoChanged = this.lastVibrato === null || Math.abs(vibrato - this.lastVibrato) > .04;
-            if (filterChanged) { this.synth.setFilter(filter); this.lastFilter = filter; }
-            if (volumeChanged) { this.synth.setMasterVolume(volume); this.lastVolume = volume; }
-            if (vibratoChanged) { this.synth.setVibrato(vibrato); this.lastVibrato = vibrato; }
+
+            if (this.lastFilter === null || Math.abs(filter - this.lastFilter) > 45) {
+                this.synth.setFilter(filter);
+                this.lastFilter = filter;
+            }
+            if (this.lastVolume === null || Math.abs(volume - this.lastVolume) > 0.03) {
+                this.synth.setMasterVolume(volume);
+                this.lastVolume = volume;
+            }
+            if (this.lastVibrato === null || Math.abs(vibrato - this.lastVibrato) > 0.05) {
+                this.synth.setVibrato(vibrato);
+                this.lastVibrato = vibrato;
+            }
 
             this.energy?.update?.(Math.min(1, this.detector.count() / 5));
             this.volume?.update?.(volume);
-            this.hud?.update?.({
-                chord: chord.chord,
-                confidence: chord.confidence,
-                filter,
-                volume,
-                key: this.classifier.root,
-                quality: chord.confidence >= .8 ? "Excellent" : chord.confidence >= .6 ? "Good" : "Low"
-            });
+
+            if (performance.now() - this.lastUI >= this.uiInterval) {
+                this.lastUI = performance.now();
+                this.hud?.update?.({
+                    chord: chord.chord,
+                    confidence: chord.confidence,
+                    filter,
+                    volume,
+                    key: this.classifier.root,
+                    quality: chord.confidence >= .8 ? "Excellent" : chord.confidence >= .6 ? "Good" : "Low"
+                });
+            }
         } catch (error) {
-            console.error("Gesture processing error:", error);
+            if (APP_CONFIG.DEBUG) console.error("Gesture processing error:", error);
             this.hud?.setStatus?.("Recovering", false);
         }
     }
